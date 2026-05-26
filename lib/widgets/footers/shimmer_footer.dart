@@ -8,7 +8,8 @@ class ShimmerFooter extends StatefulWidget {
   State<ShimmerFooter> createState() => _ShimmerFooterState();
 }
 
-class _ShimmerFooterState extends State<ShimmerFooter> with SingleTickerProviderStateMixin {
+class _ShimmerFooterState extends State<ShimmerFooter>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
@@ -19,7 +20,7 @@ class _ShimmerFooterState extends State<ShimmerFooter> with SingleTickerProvider
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _animation = CurvedAnimation(
       parent: _controller,
       curve: Curves.easeInOutSine,
@@ -34,7 +35,7 @@ class _ShimmerFooterState extends State<ShimmerFooter> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(  // ✅ ADD THIS
+    return RepaintBoundary(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: AnimatedBuilder(
@@ -49,16 +50,17 @@ class _ShimmerFooterState extends State<ShimmerFooter> with SingleTickerProvider
                 ).createShader(bounds);
               },
               blendMode: BlendMode.srcIn,
-              child: const Text(
-                'Created by Tejas Gayake 🐱',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              child: child,
             );
           },
+          child: const Text(
+            'Created by Tejas Gayake',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ),
       ),
     );

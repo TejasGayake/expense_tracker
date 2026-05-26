@@ -355,6 +355,102 @@ Set up GitHub Actions:
 
 ---
 
+## Animation Overhaul (Premium & Smooth)
+
+Style: 60fps glass morphism feel, smooth curves, subtle depth. Like a premium banking app.
+
+### Current State Audit
+
+| File | Animation | Status |
+|------|-----------|--------|
+| `shimmer_footer.dart` | 1500ms shimmer gradient sweep (easeInOutSine) | Works, basic |
+| `flowing_footer.dart` | 8000ms flowing gradient loop (linear) | Works, basic |
+| `ios_switch.dart` | 200ms thumb slide + color change | Works, dead controller |
+| `statistics_screen.dart` | fl_chart built-in chart animations | Works |
+| `people_screen.dart` | TabBar swipe transitions | Works, setState on every swipe |
+| All other screens | **No animations** | Static |
+
+### Issues to Fix First
+- `AnimationController` in ios_switch is dead code (created but never listened to)
+- `AnimationService` not singleton, async race in constructor
+- No `AnimatedSwitcher` for footer type switching
+- `GestureDetector` instead of `InkWell` in pin_screen and transaction_card (no ripple)
+- `setState(() {})` fires on every tab swipe gesture in people_screen
+- Missing `RepaintBoundary` on chart containers
+
+### Page Transitions
+- Custom `PageRouteBuilder` with slide-from-right + fade (300ms, Curves.easeOutCubic)
+- Hero animations on transaction cards → detail screen (amount text, category icon)
+- Shared element on person avatar → person details
+- Cross-fade for bottom sheet presentations
+
+### Home Screen Animations
+- Staggered entrance for summary cards (slide up 40px + fade, 200ms delay per card)
+- Number counting animation for totals (₹0 → ₹45,230 over 800ms)
+- `AnimatedList` for transaction cards (slide in from right, 150ms stagger)
+- FAB scale-in animation on screen load (0 → 1 with Curves.elasticOut)
+- Animated "People who owe you" section expand/collapse
+
+### PIN Screen Animations
+- Dot scale-up when digit entered (1.0 → 1.3 → 1.0 bounce)
+- Horizontal shake on wrong PIN (8px oscillation, 300ms)
+- Checkmark draw animation on success (CustomPainter, 500ms)
+- `InkWell` ripple on keypad buttons
+- Error message fade-in / fade-out
+
+### Transaction Card Animations
+- `InkWell` with Material ripple splash
+- Scale-down on press (1.0 → 0.97 with Curves.easeOut)
+- `Dismissible` for swipe-to-delete (red background + trash icon)
+- Staggered entrance when list loads (50ms delay per card, slide from bottom + fade)
+- Hero tag on amount text and category icon for detail transition
+
+### People Screen Animations
+- Staggered card entrance (same as transaction cards)
+- `AnimatedSwitcher` for FAB show/hide between tabs
+- Fix `setState` on every tab swipe (check `indexIsChanging`)
+- Avatar pulse animation when new person is added
+
+### Statistics Screen Animations
+- Explicit `swapAnimationDuration` (800ms, Curves.easeOutCubic) on PieChart and BarChart
+- Animated period selector highlight (sliding indicator)
+- Staggered category list entrance
+- Value counting animation on insight numbers
+
+### Add Transaction Screen Animations
+- Staggered form field reveal on screen open (slide up + fade, 100ms per field)
+- Save button loading animation (circular progress inside button)
+- Success checkmark before navigation
+
+### General / Cross-cutting
+- Loading skeletons instead of `CircularProgressIndicator` (shimmer boxes)
+- `AnimatedSwitcher` for footer type switching with crossfade
+- Fix `AnimationService` → proper singleton with `ChangeNotifier`
+- Remove dead `AnimationController` from ios_switch
+- Add `RepaintBoundary` on chart containers, summary cards
+- Replace all `GestureDetector` (no feedback) with `InkWell` where appropriate
+- Custom shimmer loading effect for data-loading states
+
+### Animation Constants (to be defined in app_theme.dart or new animation_constants.dart)
+```dart
+// Durations
+const Duration kFastDuration = Duration(milliseconds: 150);
+const Duration kNormalDuration = Duration(milliseconds: 250);
+const Duration kSlowDuration = Duration(milliseconds: 400);
+const Duration kEntranceDuration = Duration(milliseconds: 300);
+
+// Curves
+const Curve kDefaultCurve = Curves.easeOutCubic;
+const Curve kEntranceCurve = Curves.easeOutQuart;
+const Curve kBounceCurve = Curves.elasticOut;
+
+// Stagger
+const Duration kStaggerDelay = Duration(milliseconds: 50);
+const Duration kCardStaggerDelay = Duration(milliseconds: 80);
+```
+
+---
+
 ## Architecture Improvements
 
 ### Migration to Clean Architecture

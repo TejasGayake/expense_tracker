@@ -99,9 +99,14 @@ class _AnimationSettingsScreenState extends State<AnimationSettingsScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
-              child: _selectedType == FooterAnimationType.shimmer
-                  ? const ShimmerFooter()
-                  : const FlowingFooter(),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeOutCubic,
+                child: _selectedType == FooterAnimationType.shimmer
+                    ? const ShimmerFooter(key: ValueKey('shimmer'))
+                    : const FlowingFooter(key: ValueKey('flowing')),
+              ),
             ),
           ),
           

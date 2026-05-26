@@ -8,7 +8,8 @@ class FlowingFooter extends StatefulWidget {
   State<FlowingFooter> createState() => _FlowingFooterState();
 }
 
-class _FlowingFooterState extends State<FlowingFooter> with SingleTickerProviderStateMixin {
+class _FlowingFooterState extends State<FlowingFooter>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -28,7 +29,7 @@ class _FlowingFooterState extends State<FlowingFooter> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(  // ✅ ADD THIS
+    return RepaintBoundary(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: AnimatedBuilder(
@@ -43,16 +44,17 @@ class _FlowingFooterState extends State<FlowingFooter> with SingleTickerProvider
                 ).createShader(bounds);
               },
               blendMode: BlendMode.srcIn,
-              child: const Text(
-                'Created by Tejas Gayake 🐱',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              child: child,
             );
           },
+          child: const Text(
+            'Created by Tejas Gayake',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ),
       ),
     );

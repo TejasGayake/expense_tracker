@@ -12,21 +12,32 @@ class FooterManager extends StatefulWidget {
 
 class _FooterManagerState extends State<FooterManager> {
   final AnimationService _animationService = AnimationService();
-  FooterAnimationType _currentType = FooterAnimationType.shimmer;
 
   @override
   void initState() {
     super.initState();
-    _currentType = _animationService.currentType;
+    _animationService.addListener(_onAnimationChanged);
+  }
+
+  @override
+  void dispose() {
+    _animationService.removeListener(_onAnimationChanged);
+    super.dispose();
+  }
+
+  void _onAnimationChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    switch (_currentType) {
-      case FooterAnimationType.shimmer:
-        return const ShimmerFooter();
-      case FooterAnimationType.flowing:
-        return const FlowingFooter();
-    }
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 400),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeOutCubic,
+      child: _animationService.currentType == FooterAnimationType.shimmer
+          ? const ShimmerFooter(key: ValueKey('shimmer'))
+          : const FlowingFooter(key: ValueKey('flowing')),
+    );
   }
 }

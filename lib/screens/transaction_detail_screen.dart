@@ -159,11 +159,17 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Text(
-                    '₹${(widget.transaction['amount'] as num).toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
+                  Hero(
+                    tag: 'txn_amount_${widget.transaction['id']}',
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: Text(
+                        '₹${(widget.transaction['amount'] as num).toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),

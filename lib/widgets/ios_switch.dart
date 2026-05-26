@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class IOSSwitch extends StatefulWidget {
+class IOSSwitch extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
   final bool hapticFeedback;
@@ -13,76 +13,26 @@ class IOSSwitch extends StatefulWidget {
     this.hapticFeedback = true,
   });
 
-  @override
-  State<IOSSwitch> createState() => _IOSSwitchState();
-}
-
-class _IOSSwitchState extends State<IOSSwitch> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-
   static const Color iosGreen = Color(0xFF34C759);
 
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-
-    // Set initial position
-    if (widget.value) {
-      _animationController.value = 1.0;
+  void _handleTap(BuildContext context) {
+    if (hapticFeedback) {
+      HapticFeedback.selectionClick();
     }
-  }
-
-  @override
-  void didUpdateWidget(IOSSwitch oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Animate to new position when value changes externally
-    if (widget.value != oldWidget.value) {
-      if (widget.value) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _handleTap() {
-    // Provide haptic feedback
-    if (widget.hapticFeedback) {
-      switch (Theme.of(context).platform) {
-        case TargetPlatform.iOS:
-        case TargetPlatform.macOS:
-          HapticFeedback.lightImpact();
-          break;
-        default:
-          HapticFeedback.vibrate();
-      }
-    }
-    
-    // Toggle value
-    widget.onChanged(!widget.value);
+    onChanged(!value);
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _handleTap,
+      onTap: () => _handleTap(context),
       child: Container(
         width: 51,
         height: 31,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: widget.value ? Colors.transparent : Colors.grey.shade400,
+            color: value ? Colors.transparent : Colors.grey.shade400,
             width: 0.5,
           ),
           boxShadow: [
@@ -95,21 +45,21 @@ class _IOSSwitchState extends State<IOSSwitch> with SingleTickerProviderStateMix
         ),
         child: Stack(
           children: [
-            // Background - ALWAYS GREEN when ON, grey when OFF
+            // Background
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOut,
               decoration: BoxDecoration(
-                color: widget.value ? iosGreen : Colors.grey.shade300,
+                color: value ? iosGreen : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            
-            // Thumb (the white circle)
+
+            // Thumb (white circle)
             AnimatedAlign(
               duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut, // ✅ FIXED: Changed from Curves.spring to Curves.easeInOut
-              alignment: widget.value ? Alignment.centerRight : Alignment.centerLeft,
+              curve: Curves.easeInOut,
+              alignment: value ? Alignment.centerRight : Alignment.centerLeft,
               child: Container(
                 width: 27,
                 height: 27,

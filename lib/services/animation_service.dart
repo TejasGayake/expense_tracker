@@ -7,38 +7,44 @@ enum FooterAnimationType {
   flowing,
 }
 
-class AnimationService {
-  static const String _animationPrefKey = 'footer_animation_type';
-  
-  // ✅ CHANGE DEFAULT TO FLOWING
-  FooterAnimationType _currentType = FooterAnimationType.flowing;
-  
-  FooterAnimationType get currentType => _currentType;
-  
-  AnimationService() {
+class AnimationService extends ChangeNotifier {
+  static final AnimationService _instance = AnimationService._internal();
+  factory AnimationService() => _instance;
+  AnimationService._internal() {
     _loadPreference();
   }
-  
+
+  static const String _animationPrefKey = 'footer_animation_type';
+
+  FooterAnimationType _currentType = FooterAnimationType.flowing;
+  bool _loaded = false;
+
+  FooterAnimationType get currentType => _currentType;
+  bool get isLoaded => _loaded;
+
   Future<void> _loadPreference() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final index = prefs.getInt(_animationPrefKey);
-      if (index != null) {
+      if (index != null && index < FooterAnimationType.values.length) {
         _currentType = FooterAnimationType.values[index];
       } else {
-        // ✅ If no preference saved, set flowing as default
         _currentType = FooterAnimationType.flowing;
         await prefs.setInt(_animationPrefKey, FooterAnimationType.flowing.index);
       }
+      _loaded = true;
+      notifyListeners();
     } catch (e) {
       if (kDebugMode) {
         print('Error loading animation preference: $e');
       }
+      _loaded = true;
     }
   }
-  
+
   Future<void> setAnimationType(FooterAnimationType type) async {
     _currentType = type;
+    notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_animationPrefKey, type.index);
@@ -48,8 +54,8 @@ class AnimationService {
       }
     }
   }
-  
-  // 🎨 SMOOTH GRADIENT - 20 colors for seamless transition
+
+  // Smooth gradient - 26 colors for seamless transition
   static const List<Color> footerColors = [
     Color(0xFF001219),
     Color(0xFF002834),
@@ -78,8 +84,7 @@ class AnimationService {
     Color(0xFF762426),
     Color(0xFF9b2226),
   ];
-  
-  // Helper method to get a subset of colors if needed
+
   static List<Color> getGradientColors({int start = 0, int? end}) {
     end ??= footerColors.length;
     return footerColors.sublist(start, end);
