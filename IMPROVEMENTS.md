@@ -1,10 +1,10 @@
 # GT Expenser — Improvement Roadmap
 
-Suggestions to make GT Expenser a production-ready, feature-rich expense tracker.
+All planned features and improvements for GT Expenser. Smart/AI features excluded (except Transaction Templates).
 
 ---
 
-## High Priority
+## High Priority (Technical)
 
 ### 1. Add Tests
 There are zero tests. Start with:
@@ -32,7 +32,7 @@ Sync uses plain HTTP — anyone on the same WiFi can intercept transaction data.
 
 ---
 
-## Medium Priority
+## Medium Priority (Technical)
 
 ### 5. Split `DatabaseService` (986 lines)
 It's a god class. Split into:
@@ -63,7 +63,7 @@ Transactions store `categoryId` AND `category` (name string). If a category is r
 
 ---
 
-## Low Priority / Polish
+## Low Priority (Technical / Polish)
 
 ### 10. Onboarding Flow
 First-time users land on an empty home screen. Add:
@@ -106,125 +106,252 @@ Set up GitHub Actions:
 
 ---
 
-## Feature Suggestions
+## Financial Features
 
 ### Budgeting
 - Set monthly/weekly budgets per category
 - Visual progress bars showing budget vs actual spending
 - Alerts when approaching or exceeding budget (80%, 100% thresholds)
 - Budget history and trend comparison month-over-month
+- Rollover unused budget to next month (optional)
 
 ### Bill Reminders & Recurring Payments
 - Set up recurring bills (rent, subscriptions, EMIs)
 - Push notifications before due dates (1 day, 3 days, 1 week)
 - Calendar view showing upcoming bills
 - Auto-mark as paid when a matching transaction is added
+- Overdue bill highlighting
 
 ### Financial Goals
 - Set savings goals (e.g., "Save ₹50,000 for vacation")
-- Track progress with visual indicators
+- Track progress with visual indicators (progress ring/bar)
 - Link goal to a specific category or "Savings" bucket
 - Celebrate milestones (25%, 50%, 75%, 100%)
-
-### Receipt OCR / Smart Entry
-- Scan receipts using camera
-- Extract amount, merchant, date using OCR (Google ML Kit or Tesseract)
-- Auto-fill transaction form with extracted data
-- Store original receipt image as attachment
-
-### Widgets (Android Home Screen)
-- Quick-add expense widget
-- Today's spending summary widget
-- Monthly total widget
-- Pending dues widget
-
-### Tags & Labels
-- Add custom tags to transactions (e.g., "work lunch", "personal", "tax deductible")
-- Filter/search by tag
-- Tag-based reports in statistics
-
-### Income Tracking
-- Separate income from expenses
-- Net balance (income - expenses) on dashboard
-- Income categories (salary, freelance, gifts, refunds)
-- Cash flow chart (income vs expenses over time)
-
-### Multi-Account Support
-- Multiple wallets/accounts (Cash, Bank, Credit Card, UPI)
-- Transfer between accounts
-- Per-account balance tracking
-- Account-wise filtering in reports
-
-### Debt Tracker
-- Track loans given and received
-- EMI calculator
-- Interest tracking
-- Payment schedule with reminders
-
-### Currency Conversion
-- Real-time exchange rates (when online)
-- Multi-currency transactions
-- Default currency per account
-
-### Travel Mode
-- Tag transactions as "travel" with destination
-- Travel-specific categories (flights, hotels, food abroad)
-- Trip summary with total spend
-- Multi-currency support per trip
-
-### Shared Expenses (Group Split)
-- Create groups (roommates, trip buddies, office lunch)
-- Split bills among group members
-- Track group-level balances
-- Settle up within the group
-- Similar to Splitwise functionality
-
-### Data Insights & AI
-- Spending predictions based on history
-- "You spent 30% more on food this month" alerts
-- Anomaly detection (unusual large transactions)
-- Monthly spending report card
-- Best day/week to spend based on patterns
-
-### Backup & Restore
-- Local backup to device storage
-- Backup to Google Drive / OneDrive
-- Restore from backup file
-- Auto-backup on schedule (weekly/monthly)
+- Multiple active goals with priority ranking
 
 ### Transaction Templates
-- Save frequent transactions as templates
-- One-tap add for regular expenses
-- Template categories (morning coffee, daily commute, gym)
+- Save frequent transactions as templates (e.g., "Morning Coffee - ₹50 - Food")
+- One-tap add for regular expenses from a templates list
+- Template categories (morning coffee, daily commute, gym, groceries)
+- Edit/delete saved templates
+- Auto-suggest template based on time of day and past patterns
 
-### Dark Mode Improvements
-- AMOLED true black option
-- Schedule dark mode (sunset to sunrise)
-- Per-theme accent color customization
+### Income Tracking
+- Separate income from expenses with a transaction type toggle
+- Net balance (income - expenses) on dashboard
+- Income categories (Salary, Freelance, Gifts, Refunds, Interest)
+- Cash flow chart (income vs expenses over time)
+- Monthly income vs expense ratio
 
-### Language & Localization
-- Support multiple languages
-- Hindi, Marathi, Tamil, etc. for Indian users
-- RTL support for Arabic/Hebrew
-- Date format preferences (DD/MM/YYYY vs MM/DD/YYYY)
+### Multi-Account Support
+- Multiple wallets/accounts (Cash, Bank Account, Credit Card, UPI Wallet)
+- Transfer between accounts (internal transfers, not counted as expense)
+- Per-account balance tracking
+- Account-wise filtering in reports and statistics
+- Default account selection
 
-### Advanced Statistics
-- Heatmap calendar (GitHub-style spending visualization)
-- Top 5 merchants/vendors
-- Weekday vs weekend spending comparison
-- Spending velocity (rate of spending over time)
-- Year-in-review summary
+### Debt Tracker
+- Track loans given and received separately
+- EMI calculator with amortization schedule
+- Interest tracking (simple and compound)
+- Payment schedule with push notification reminders
+- Debt-free countdown
 
-### Notification Center
-- In-app notification history
-- Categorized alerts (budget, reminders, sync, settlements)
-- Mark as read/unread
-- Notification preferences per type
+### Subscription Tracker
+- List all active subscriptions (Netflix, Spotify, gym, etc.)
+- Monthly and yearly cost breakdown
+- Renewal date reminders
+- Total monthly subscription burn rate
+- Cancel suggestion when total exceeds threshold
 
-### Voice Input
-- "Add ₹250 for lunch" voice command
-- Voice search for transactions
-- Hands-free expense logging while driving
+### Expense Limits
+- Set daily/weekly spending limits
+- Real-time tracking: "₹350 left today" indicator on home screen
+- Warning notification at 80% of limit
+- Block or warn when limit exceeded
+- Per-category or global limits
+
+### Tax Deductions
+- Mark transactions as tax-deductible with a toggle
+- Deductible categories (Medical, Education, Donations, Business)
+- Annual tax report summary
+- Export tax-deductible transactions separately
+- Financial year wise filtering (April to March for India)
+
+### Savings Challenges
+- 52-week savings challenge (₹1 to ₹52 incrementing weekly)
+- No-spend day challenge (track days with zero spending)
+- Custom challenge creation
+- Progress tracking with streak counter
+- Reward/badge system for completing challenges
+
+### Bill Comparison
+- Compare utility bills month-over-month (electricity, water, gas)
+- Visual diff showing increase/decrease percentage
+- Alerts when a bill is significantly higher than average
+- Historical chart for each recurring bill
+
+### Emergency Fund Tracker
+- Set emergency fund target (e.g., 6 months of expenses)
+- Track contributions to emergency fund
+- Auto-calculate target based on average monthly spending
+- Progress ring on dashboard
+
+### Investment Tracker (Basic)
+- Track SIPs, RDs, FDs, mutual funds
+- Add investment with amount, date, expected return
+- Total investment value on dashboard
+- Maturity date reminders
+- Investment vs expense allocation pie chart
+
+### Warranty Tracker
+- Track product warranties (purchase date, warranty period, expiry)
+- Push notification before warranty expires
+- Attach purchase receipt/bill photo
+- Category-wise warranty list (electronics, appliances, furniture)
+
+---
+
+## UX Features
+
+### Swipe Actions on Transactions
+- Swipe left: quick delete (with undo snackbar)
+- Swipe right: quick edit or duplicate
+- Visual feedback with colored background and icons
+- Configurable swipe actions in settings
+
+### Pin/Favorite Transactions
+- Star or pin important transactions to the top of the list
+- Separate "Pinned" section on home screen
+- Quick access to pinned items
+
+### Quick Add from Notification
+- Persistent notification with "+" button
+- Tap to open add transaction screen directly
+- Quick-add widget in notification shade
+- Configurable in settings (enable/disable)
+
+### Expense Calendar View
+- Calendar widget showing each day's spending
+- Color-coded dots (green = low, yellow = medium, red = high spending)
+- Tap a day to see that day's transactions
+- Monthly overview with total per day
+
+### Quick Filters on Home Screen
+- Filter chips below summary cards: Today, This Week, This Month, All
+- Instant filtering without navigating to search
+- Remembers last selected filter
+
+### Undo Delete
+- Show SnackBar with "Undo" button after deleting a transaction
+- 5-second window to undo
+- Transaction restored with all relationships (splits, attachments)
+
+### Bulk Operations
+- Long-press to enter selection mode
+- Select multiple transactions with checkboxes
+- Bulk actions: delete, change category, change date, export selected
+- Select all / deselect all
+
+### Duplicate Transaction
+- Long-press or swipe to duplicate a transaction
+- Opens pre-filled add transaction screen
+- Adjust date to today automatically
+
+### Photo Gallery / Receipt Viewer
+- Dedicated screen showing all receipt/attachment photos
+- Grid view with transaction info overlay
+- Tap to view full screen with zoom
+- Filter by date range or category
+
+### Spending Streak (Gamification)
+- Track consecutive days of expense logging
+- Show current streak and best streak on dashboard
+- Milestone badges (7 days, 30 days, 100 days, 365 days)
+- Gentle reminder notification if streak is about to break
+
+### Category Quick Reorder
+- Drag-and-drop to reorder categories in the categories screen
+- Most-used categories float to top (auto or manual)
+- Custom category order persisted in SharedPreferences
+
+### Expense Notes with Checklist
+- Checklist format for shopping lists or trip packing
+- Check/uncheck items within transaction notes
+- Useful for grocery runs, trip planning
+
+### Location-based Category Suggestion
+- Auto-suggest category based on GPS location
+- Learn from past transactions at same location
+- "You usually categorize transactions here as Food"
+- Requires location permission (optional)
+
+### Duplicate Detection Warning
+- Warn when adding a transaction similar to a recent one
+- Match on amount + category + date proximity
+- "Did you already add this? Similar transaction found 2 hours ago"
+- Allow user to dismiss or confirm duplicate
+
+### Spending Heatmap on Dashboard
+- Small GitHub-style calendar heatmap on home screen
+- Last 3 months visible
+- Darker color = more spending that day
+- Tap a day to see details
+
+### Custom Accent Colors
+- Let users pick their own accent/primary color
+- Preset palette + custom hex input
+- Applies to buttons, charts, highlights
+- Persist in SharedPreferences
+
+### Monthly Summary Cards
+- Swipeable cards on home screen showing month summary
+- Total spent, top category, biggest transaction, savings rate
+- Compare with previous month (+12% or -8% indicator)
+- Share summary as image
+
+### Transaction Sorting Options
+- Sort by: date, amount (high/low), category, alphabetical
+- Sort toggle on home screen and search results
+- Persist sort preference
+
+### Expense Split History
+- Dedicated view showing all past splits with people
+- Timeline of settlements
+- Who paid what and when
+- Outstanding balance summary across all people
+
+### Haptic Feedback Customization
+- Different vibration patterns for different actions
+- Light tap for toggle, medium for button press, heavy for delete
+- Enable/disable haptics in settings
+
+### Pull-down Quick Stats
+- Pull down on home screen to reveal quick stats panel
+- Today's total, this week, this month
+- Top spending category this month
+- Number of transactions this month
+
+### Animated Page Transitions
+- Smooth shared element transitions between screens
+- Hero animations on transaction cards
+- Fade/slide transitions for navigation
+
+### App Lock Timeout Indicator
+- Show remaining time before auto-lock
+- Visual indicator in app bar or bottom bar
+- "Locking in 2:30" countdown when app is backgrounded
+
+### Expense Reminders
+- "Don't forget to log today's expenses" evening reminder
+- Configurable reminder time
+- Only fires if no transactions logged today
+- Smart: learns user's typical logging pattern
+
+### Favorite/Pinned Categories
+- Pin 3-5 most-used categories to the top of category picker
+- Quick access when adding transactions
+- Auto-suggest based on usage frequency
 
 ---
 
@@ -257,10 +384,21 @@ lib/
 | `local_auth` | Biometric authentication |
 | `csv` | CSV export |
 | `pdf` | PDF report generation |
-| `google_mlkit_text_recognition` | Receipt OCR |
 | `home_widget` | Android home screen widgets |
 | `flutter_localizations` | Multi-language support |
-| `firebase_crashlytics` | Crash reporting (optional) |
+
+---
+
+## Feature Count Summary
+
+| Category | Count |
+|----------|-------|
+| Technical Improvements | 14 |
+| Quick Wins | 5 |
+| Financial Features | 15 |
+| UX Features | 24 |
+| Architecture | 2 |
+| **Total** | **60** |
 
 ---
 
