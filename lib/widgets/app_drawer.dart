@@ -8,7 +8,9 @@ import '../screens/people_screen.dart';
 import '../screens/pin_screen.dart';
 import '../screens/home_screen.dart';
 import '../services/security_service.dart';
-import 'ios_switch.dart'; // needed for the custom toggle widget
+import '../services/export_service.dart';
+import '../services/settings_service.dart';
+import 'ios_switch.dart';
 import 'package:expense_tracker/widgets/footers/footer_manager.dart';
 import '../screens/animation_settings_screen.dart';
 
@@ -253,14 +255,40 @@ class AppDrawer extends StatelessWidget {
                       context,
                       icon: Icons.download,
                       label: 'Export Data',
+                      onTap: () async {
+                        Navigator.pop(context);
+                        try {
+                          final exportService = ExportService();
+                          final path = await exportService.exportTransactionsToCsv();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Exported to: $path'),
+                                backgroundColor: Colors.green,
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Export failed: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
+
+                    _buildMenuItem(
+                      context,
+                      icon: Icons.currency_exchange,
+                      label: 'Currency',
                       onTap: () {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Export feature coming soon!'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
+                        _showCurrencyPicker(context);
                       },
                     ),
 
@@ -338,6 +366,39 @@ class AppDrawer extends StatelessWidget {
   Future<String?> _getUserName() async {
     // You can implement this to get actual user name
     return 'Welcome back!';
+  }
+
+  void _showCurrencyPicker(BuildContext context) {
+    final settings = SettingsService();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Currency'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: SettingsService.availableCurrencies.length,
+            itemBuilder: (context, index) {
+              final currency = SettingsService.availableCurrencies[index];
+              final isSelected = currency['symbol'] == settings.currencySymbol;
+              return ListTile(
+                leading: Text(
+                  currency['symbol']!,
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                title: Text(currency['name']!),
+                trailing: isSelected ? Icon(Icons.check, color: Theme.of(context).primaryColor) : null,
+                onTap: () async {
+                  await settings.setCurrency(currency['symbol']!);
+                  if (context.mounted) Navigator.pop(context);
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   void _showAboutDialog(BuildContext context) {
