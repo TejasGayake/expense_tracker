@@ -86,13 +86,32 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         print('Auth Check - shouldShowLock: $shouldShowLock, isFirstTime: $isFirstTime, pinEnabled: $pinEnabled');
       }
       
+      // Try biometric auth first if available and enabled
+      if (pinEnabled && shouldShowLock) {
+        final biometricEnabled = await _security.isBiometricEnabled();
+        final biometricAvailable = await _security.isBiometricAvailable();
+        if (biometricEnabled && biometricAvailable) {
+          final authenticated = await _security.authenticateWithBiometrics();
+          if (authenticated) {
+            await _security.updateLastActive();
+            await _initializeApp();
+            setState(() {
+              _isAuthenticated = true;
+              _isFirstTime = isFirstTime;
+              _isLoading = false;
+            });
+            return;
+          }
+        }
+      }
+
       // Initialize app if authenticated
       if (pinEnabled && !shouldShowLock) {
         await _initializeApp();
       } else if (!pinEnabled) {
         await _initializeApp();
       }
-      
+
       setState(() {
         _isAuthenticated = pinEnabled ? !shouldShowLock : true;
         _isFirstTime = isFirstTime;

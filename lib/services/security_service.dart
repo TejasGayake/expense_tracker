@@ -1,5 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:crypto/crypto.dart';
+import 'package:local_auth/local_auth.dart';
 import 'dart:convert';
 
 class SecurityService {
@@ -183,5 +184,40 @@ class SecurityService {
   Future<bool> isFirstTimeSetup() async {
     final hasPin = await _storage.containsKey(key: _pinHashKey);
     return !hasPin;
+  }
+
+  // ===== BIOMETRIC METHODS =====
+
+  Future<bool> isBiometricAvailable() async {
+    final localAuth = LocalAuthentication();
+    try {
+      return await localAuth.canCheckBiometrics;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> authenticateWithBiometrics() async {
+    final localAuth = LocalAuthentication();
+    try {
+      return await localAuth.authenticate(
+        localizedReason: 'Authenticate to access GT Expenser',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> isBiometricEnabled() async {
+    final value = await _storage.read(key: 'biometric_enabled');
+    return value == 'true';
+  }
+
+  Future<void> setBiometricEnabled(bool enabled) async {
+    await _storage.write(key: 'biometric_enabled', value: enabled.toString());
   }
 }

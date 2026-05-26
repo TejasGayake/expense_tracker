@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/security_service.dart';
+import '../widgets/ios_switch.dart';
 import 'pin_screen.dart';
 
 class SecuritySettingsScreen extends StatefulWidget {
@@ -13,6 +14,8 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
   final SecurityService _security = SecurityService();
   
   bool _isPinEnabled = false;
+  bool _isBiometricEnabled = false;
+  bool _isBiometricAvailable = false;
   int _autoLockDelay = SecurityService.delayOptions['After 5 minutes']!;
   bool _isLoading = true;
 
@@ -25,10 +28,14 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
   Future<void> _loadSettings() async {
     final isPinEnabled = await _security.isPinEnabled();
     final autoLockDelay = await _security.getAutoLockDelay();
-    
+    final biometricAvailable = await _security.isBiometricAvailable();
+    final biometricEnabled = await _security.isBiometricEnabled();
+
     setState(() {
       _isPinEnabled = isPinEnabled;
       _autoLockDelay = autoLockDelay;
+      _isBiometricAvailable = biometricAvailable;
+      _isBiometricEnabled = biometricEnabled;
       _isLoading = false;
     });
   }
@@ -138,9 +145,50 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                     ],
                   ],
                 ),
-                
+
+                // Biometric Section
+                if (_isPinEnabled && _isBiometricAvailable) ...[
+                  const Divider(),
+                  _buildSection(
+                    title: 'Biometric Authentication',
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Fingerprint / Face ID',
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Unlock with biometrics instead of PIN',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                            IOSSwitch(
+                              value: _isBiometricEnabled,
+                              onChanged: (value) async {
+                                await _security.setBiometricEnabled(value);
+                                setState(() {
+                                  _isBiometricEnabled = value;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+
                 const Divider(),
-                
+
                 // Auto-lock Section
                 if (_isPinEnabled)
                   _buildSection(
