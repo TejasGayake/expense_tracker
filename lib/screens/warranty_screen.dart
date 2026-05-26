@@ -11,7 +11,7 @@ class WarrantyScreen extends StatefulWidget {
 
 class _WarrantyScreenState extends State<WarrantyScreen> {
   final WarrantyService _service = WarrantyService();
-  List<Warranty> _warranties = [];
+  List<WarrantyEntry> _warranties = [];
   bool _isLoading = true;
 
   @override
@@ -31,7 +31,7 @@ class _WarrantyScreenState extends State<WarrantyScreen> {
   void _showAddDialog() {
     final nameCtrl = TextEditingController();
     final monthsCtrl = TextEditingController(text: '12');
-    String? category;
+    String category = 'Electronics';
     DateTime purchaseDate = DateTime.now();
 
     showDialog(
@@ -93,7 +93,9 @@ class _WarrantyScreenState extends State<WarrantyScreen> {
                   items: ['Electronics', 'Appliances', 'Furniture', 'Vehicle', 'Other']
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                       .toList(),
-                  onChanged: (v) => setDialogState(() => category = v),
+                  onChanged: (v) {
+                    if (v != null) setDialogState(() => category = v);
+                  },
                 ),
               ],
             ),
@@ -106,7 +108,7 @@ class _WarrantyScreenState extends State<WarrantyScreen> {
             ElevatedButton(
               onPressed: () async {
                 if (nameCtrl.text.isNotEmpty) {
-                  final warranty = Warranty(
+                  final warranty = WarrantyEntry(
                     id: DateTime.now().millisecondsSinceEpoch.toString(),
                     productName: nameCtrl.text,
                     purchaseDate: purchaseDate,
@@ -128,8 +130,9 @@ class _WarrantyScreenState extends State<WarrantyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final expiring = _warranties.where((w) => !w.isExpired && w.daysRemaining <= 30).toList();
-    final active = _warranties.where((w) => !w.isExpired && w.daysRemaining > 30).toList();
+    final expiring = _service.getExpiringSoon(_warranties);
+    final activeIds = expiring.map((w) => w.id).toSet();
+    final active = _warranties.where((w) => !w.isExpired && !activeIds.contains(w.id)).toList();
     final expired = _warranties.where((w) => w.isExpired).toList();
 
     return Scaffold(
@@ -191,7 +194,7 @@ class _WarrantyScreenState extends State<WarrantyScreen> {
     );
   }
 
-  Widget _buildCard(Warranty w) {
+  Widget _buildCard(WarrantyEntry w) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -215,9 +218,7 @@ class _WarrantyScreenState extends State<WarrantyScreen> {
           w.isExpired
               ? 'Expired ${DateFormat('MMM d, yyyy').format(w.expiryDate)}'
               : '${w.daysRemaining} days remaining',
-          style: TextStyle(
-            color: w.isExpired ? Colors.red : Colors.grey[600],
-          ),
+          style: TextStyle(color: w.isExpired ? Colors.red : Colors.grey[600]),
         ),
         trailing: IconButton(
           icon: const Icon(Icons.delete_outline, color: Colors.red),

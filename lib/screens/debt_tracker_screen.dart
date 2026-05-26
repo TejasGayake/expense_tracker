@@ -250,18 +250,6 @@ class _DebtTrackerScreenState extends State<DebtTrackerScreen> with SingleTicker
             onPressed: () async {
               final amount = double.tryParse(amountController.text.trim());
               if (amount != null && amount > 0) {
-                final updated = DebtEntry(
-                  id: debt.id,
-                  personName: debt.personName,
-                  amount: debt.amount,
-                  interestRate: debt.interestRate,
-                  type: debt.type,
-                  startDate: debt.startDate,
-                  dueDate: debt.dueDate,
-                  notes: debt.notes,
-                );
-                // Since DebtEntry doesn't have a mutable paidAmount, we just delete
-                // In a real scenario, you'd update the entry
                 await _debtService.delete(debt.id);
                 if (context.mounted) Navigator.pop(context);
                 _loadDebts();

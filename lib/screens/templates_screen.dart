@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../services/template_service.dart';
 import '../services/settings_service.dart';
-import '../services/database_service.dart';
-import '../models/category_model.dart';
 import 'add_transaction_screen.dart';
 
 class TemplatesScreen extends StatefulWidget {
@@ -16,7 +13,6 @@ class TemplatesScreen extends StatefulWidget {
 class _TemplatesScreenState extends State<TemplatesScreen> {
   final TemplateService _templateService = TemplateService();
   final SettingsService _settings = SettingsService();
-  final DatabaseService _db = DatabaseService();
 
   List<TransactionTemplate> _templates = [];
   bool _isLoading = true;
@@ -146,20 +142,44 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
   }
 
   void _useTemplate(TransactionTemplate template) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddTransactionScreen(
-          transactionToEdit: {
-            'amount': template.amount,
-            'description': template.name,
-            'category': template.category,
-            'paymentMode': template.paymentMode,
-            'date': DateTime.now().millisecondsSinceEpoch,
-          },
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Use "${template.name}"'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Amount: ${_settings.currencySymbol}${template.amount.toStringAsFixed(2)}'),
+            Text('Category: ${template.category}'),
+            Text('Payment: ${template.paymentMode}'),
+            const SizedBox(height: 12),
+            Text(
+              'Open the add transaction screen with these details?',
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            ),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddTransactionScreen(),
+                ),
+              ).then((_) => _loadTemplates());
+            },
+            child: const Text('Open'),
+          ),
+        ],
       ),
-    ).then((_) => _loadTemplates());
+    );
   }
 
   @override
