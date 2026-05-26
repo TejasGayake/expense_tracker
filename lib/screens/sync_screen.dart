@@ -78,21 +78,89 @@ class _SyncScreenState extends State<SyncScreen> {
     });
   }
 
+  final TextEditingController _ipController = TextEditingController();
+
   Future<void> _syncNow() async {
     setState(() {
       _isLoading = true;
       _status = 'Syncing...';
     });
-    
-    // Manual sync implementation
-    // For now, just update last sync time
-    await Future.delayed(const Duration(seconds: 2));
-    
-    setState(() {
-      _lastSync = DateTime.now();
-      _status = 'Sync completed';
-      _isLoading = false;
-    });
+
+    try {
+      if (_syncService.isConnected && _syncService.connectedServerIp != null) {
+        // Already connected, trigger sync via the connected server
+        await _syncService.syncWithServer(
+          _syncService.connectedServerIp!,
+          _syncService.connectedServerPort ?? SyncService.syncPort,
+        );
+        setState(() {
+          _lastSync = DateTime.now();
+          _status = 'Sync completed';
+          _isLoading = false;
+        });
+      } else {
+        // Not connected, show manual IP entry
+        setState(() {
+          _isLoading = false;
+          _status = 'Not connected. Enter server IP.';
+        });
+        _showManualConnectDialog();
+      }
+    } catch (e) {
+      setState(() {
+        _status = 'Sync failed: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _showManualConnectDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Connect to PC'),
+        content: TextField(
+          controller: _ipController,
+          decoration: const InputDecoration(
+            labelText: 'Server IP Address',
+            hintText: 'e.g. 192.168.1.100',
+          ),
+          keyboardType: TextInputType.number,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final ip = _ipController.text.trim();
+              if (ip.isNotEmpty) {
+                setState(() {
+                  _isLoading = true;
+                  _status = 'Connecting to $ip...';
+                });
+                await _syncService.connectToServerManual(ip, SyncService.syncPort);
+                if (_syncService.isConnected) {
+                  setState(() {
+                    _lastSync = DateTime.now();
+                    _status = 'Sync completed';
+                    _isLoading = false;
+                  });
+                } else {
+                  setState(() {
+                    _status = 'Failed to connect';
+                    _isLoading = false;
+                  });
+                }
+              }
+            },
+            child: const Text('Connect & Sync'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -341,6 +409,7 @@ Widget _buildStatusRow({
 
   @override
   void dispose() {
+    _ipController.dispose();
     _syncService.dispose();
     super.dispose();
   }

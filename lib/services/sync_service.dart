@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:bonsoir/bonsoir.dart';
@@ -23,6 +24,8 @@ class SyncService {
   bool _isServerRunning = false;
   bool _isConnected = false;
   String? _connectedDeviceName;
+  String? _connectedServerIp;
+  int? _connectedServerPort;
   DateTime? _lastSyncTime;
   
   // Callbacks
@@ -33,6 +36,8 @@ class SyncService {
   bool get isServerRunning => _isServerRunning;
   bool get isConnected => _isConnected;
   String? get connectedDeviceName => _connectedDeviceName;
+  String? get connectedServerIp => _connectedServerIp;
+  int? get connectedServerPort => _connectedServerPort;
   DateTime? get lastSyncTime => _lastSyncTime;
   
   // ===== NETWORK UTILITIES =====
@@ -48,7 +53,9 @@ class SyncService {
       final ip = await info.getWifiIP();
       return ip;
     } catch (e) {
-      print('Error getting IP: $e');
+      if (kDebugMode) {
+        print('Error getting IP: $e');
+      }
       return null;
     }
   }
@@ -58,7 +65,9 @@ class SyncService {
       // Try to get hostname
       return Platform.localHostname;
     } catch (e) {
-      print('Error getting device name: $e');
+      if (kDebugMode) {
+        print('Error getting device name: $e');
+      }
       return 'Unknown Device';
     }
   }
@@ -69,7 +78,9 @@ class SyncService {
     try {
       // Check if already running
       if (_isServerRunning) {
-        print('Server already running');
+        if (kDebugMode) {
+          print('Server already running');
+        }
         return true;
       }
       
@@ -85,7 +96,9 @@ class SyncService {
       _isServerRunning = true;
       
       _updateStatus('Server started on $ip:$syncPort');
-      print('✅ Server started on $ip:$syncPort');
+      if (kDebugMode) {
+        print('✅ Server started on $ip:$syncPort');
+      }
       
       // Advertise service via Bonjour/mDNS
       await _advertiseService();
@@ -98,7 +111,9 @@ class SyncService {
       
       return true;
     } catch (e) {
-      print('Error starting server: $e');
+      if (kDebugMode) {
+        print('Error starting server: $e');
+      }
       _updateStatus('Error starting server');
       return false;
     }
@@ -106,20 +121,25 @@ class SyncService {
   
   Future<void> _advertiseService() async {
     try {
-      // Bonsoir service advertisement
-      // Note: This is a simplified version that works with the package
       final deviceName = await getDeviceName() ?? 'ExpenseTracker';
-      
+
       _bonsoirService = BonsoirService(
         name: 'ExpenseTracker-$deviceName',
         type: serviceType,
         port: syncPort,
       );
-      
-      print('✅ Service created: ${_bonsoirService?.name}');
+
+      final bonsoirBroadcast = BonsoirBroadcast(service: _bonsoirService!);
+      await bonsoirBroadcast.ready;
+      await bonsoirBroadcast.start();
+
+      if (kDebugMode) {
+        print('✅ Service advertised: ${_bonsoirService?.name}');
+      }
     } catch (e) {
-      print('Error creating service: $e');
-      // Continue even if creation fails
+      if (kDebugMode) {
+        print('Error advertising service: $e');
+      }
     }
   }
   
@@ -153,7 +173,9 @@ class SyncService {
           }
         }
       } catch (e) {
-        print('Error handling request: $e');
+        if (kDebugMode) {
+          print('Error handling request: $e');
+        }
         request.response.statusCode = HttpStatus.internalServerError;
         request.response.write('Error: $e');
         await request.response.close();
@@ -162,7 +184,9 @@ class SyncService {
   }
   
   Future<void> _handleSyncRequest(HttpRequest request) async {
-    print('📥 Received sync request');
+    if (kDebugMode) {
+      print('📥 Received sync request');
+    }
     
     try {
       // Parse request body
@@ -192,10 +216,14 @@ class SyncService {
       await _updateLastSyncTime();
       
       _updateStatus('Sync completed');
-      print('✅ Sync completed');
-      
+      if (kDebugMode) {
+        print('✅ Sync completed');
+      }
+
     } catch (e) {
-      print('Error in sync: $e');
+      if (kDebugMode) {
+        print('Error in sync: $e');
+      }
       request.response.statusCode = HttpStatus.internalServerError;
       request.response.write('Error: $e');
       await request.response.close();
@@ -228,9 +256,13 @@ class SyncService {
       await _server?.close();
       _isServerRunning = false;
       _updateStatus('Server stopped');
-      print('✅ Server stopped');
+      if (kDebugMode) {
+        print('✅ Server stopped');
+      }
     } catch (e) {
-      print('Error stopping server: $e');
+      if (kDebugMode) {
+        print('Error stopping server: $e');
+      }
     }
   }
   
@@ -239,44 +271,82 @@ class SyncService {
   Future<void> startDiscovery() async {
     try {
       _updateStatus('Looking for devices...');
-      
-      // For now, use a manual approach - user can enter IP address
-      // In a production app, you'd use proper mDNS discovery
-      
-      // Placeholder: could implement proper discovery later
-      print('Service discovery started (manual entry required)');
+
+      _bonsoirDiscovery = BonsoirDiscovery(type: serviceType);
+      await _bonsoirDiscovery!.ready;
+
+      _bonsoirDiscovery!.eventStream!.listen((event) {
+        if (event.type == BonsoirDiscoveryEventType.discoveryServiceFound) {
+          final service = event.service!;
+          _connectedDeviceName = service.name;
+          _updateStatus('Found: ${service.name}');
+
+          // Resolve the service to get IP/port
+          _bonsoirDiscovery!.serviceResolver.resolveService(service);
+        } else if (event.type == BonsoirDiscoveryEventType.discoveryServiceResolved) {
+          final service = event.service as ResolvedBonsoirService;
+          final ip = service.host;
+          final port = service.port;
+          _isConnected = true;
+          _updateStatus('Resolved: ${service.name} at $ip:$port');
+          onConnectionChanged?.call(true);
+
+          // Auto-connect and sync
+          if (ip != null) {
+            connectToServerManual(ip, port);
+          }
+        } else if (event.type == BonsoirDiscoveryEventType.discoveryServiceLost) {
+          _isConnected = false;
+          _connectedDeviceName = null;
+          _updateStatus('Device disconnected');
+          onConnectionChanged?.call(false);
+        }
+      });
+
+      await _bonsoirDiscovery!.start();
+      if (kDebugMode) {
+        print('Service discovery started');
+      }
     } catch (e) {
-      print('Error starting discovery: $e');
+      if (kDebugMode) {
+        print('Error starting discovery: $e');
+      }
+      _updateStatus('Discovery failed: $e');
     }
   }
   
   Future<void> connectToServerManual(String ip, int port) async {
     try {
       _updateStatus('Connecting to $ip:$port');
-      
+
       // Try to connect
       final client = HttpClient();
-      
+
       // Ping to check connection
       final pingUrl = Uri.parse('http://$ip:$port/ping');
       final pingRequest = await client.getUrl(pingUrl);
       final pingResponse = await pingRequest.close();
-      
+
       if (pingResponse.statusCode == HttpStatus.ok) {
         _isConnected = true;
         _connectedDeviceName = 'Device at $ip';
+        _connectedServerIp = ip;
+        _connectedServerPort = port;
         _updateStatus('Connected to device');
-        
+
         onConnectionChanged?.call(true);
-        
+
         // Auto sync if enabled
         final autoSync = await getAutoSyncEnabled();
         if (autoSync) {
-          syncWithServer(ip, port);
+          await syncWithServer(ip, port);
         }
       }
     } catch (e) {
-      print('Error connecting: $e');
+      if (kDebugMode) {
+        print('Error connecting: $e');
+      }
+      _updateStatus('Connection failed: $e');
     }
   }
   
@@ -318,13 +388,17 @@ class SyncService {
         
         await _updateLastSyncTime();
         _updateStatus('Sync completed');
-        print('✅ Client sync completed');
+        if (kDebugMode) {
+          print('✅ Client sync completed');
+        }
       } else {
         _updateStatus('Sync failed');
       }
       
     } catch (e) {
-      print('Error syncing: $e');
+      if (kDebugMode) {
+        print('Error syncing: $e');
+      }
       _updateStatus('Sync error');
     }
   }
@@ -354,7 +428,9 @@ class SyncService {
           await _db.insertTransaction(txn);
         }
       } catch (e) {
-        print('Error importing transaction: $e');
+        if (kDebugMode) {
+          print('Error importing transaction: $e');
+        }
       }
     }
   }
@@ -367,7 +443,9 @@ class SyncService {
           await _db.insertPerson(person);
         }
       } catch (e) {
-        print('Error importing person: $e');
+        if (kDebugMode) {
+          print('Error importing person: $e');
+        }
       }
     }
   }
@@ -406,7 +484,9 @@ class SyncService {
   // ===== UTILITY =====
   
   void _updateStatus(String status) {
-    print('📱 Sync: $status');
+    if (kDebugMode) {
+      print('📱 Sync: $status');
+    }
     onStatusChanged?.call(status);
   }
   
