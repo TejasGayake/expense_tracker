@@ -344,7 +344,6 @@ class _PeopleScreenState extends State<PeopleScreen> with SingleTickerProviderSt
               _loadPeople();
             }
           });
-          // TODO: Navigate to person details
         },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
@@ -536,7 +535,18 @@ class _PeopleScreenState extends State<PeopleScreen> with SingleTickerProviderSt
                     width: 70,
                     child: ElevatedButton(
                       onPressed: () {
-                        // TODO: Navigate to person details
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PersonDetailsScreen(
+                              person: person,
+                            ),
+                          ),
+                        ).then((shouldRefresh) {
+                          if (shouldRefresh == true) {
+                            _loadPeople();
+                          }
+                        });
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).primaryColor,
@@ -657,7 +667,6 @@ class _PeopleScreenState extends State<PeopleScreen> with SingleTickerProviderSt
               _loadPeople();
             }
           });
-          // TODO: Navigate to person details
         },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
@@ -859,7 +868,18 @@ class _PeopleScreenState extends State<PeopleScreen> with SingleTickerProviderSt
                     width: 70,
                     child: ElevatedButton(
                       onPressed: () {
-                        // TODO: Navigate to person details
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PersonDetailsScreen(
+                              person: person,
+                            ),
+                          ),
+                        ).then((shouldRefresh) {
+                          if (shouldRefresh == true) {
+                            _loadPeople();
+                          }
+                        });
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).primaryColor,

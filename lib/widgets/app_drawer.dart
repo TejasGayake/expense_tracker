@@ -5,6 +5,9 @@ import '../screens/sync_screen.dart';
 import '../screens/categories_screen.dart';
 import '../screens/search_screen.dart';
 import '../screens/people_screen.dart';
+import '../screens/pin_screen.dart';
+import '../screens/home_screen.dart';
+import '../services/security_service.dart';
 import 'ios_switch.dart'; // needed for the custom toggle widget
 import 'package:expense_tracker/widgets/footers/footer_manager.dart';
 import '../screens/animation_settings_screen.dart';
@@ -122,7 +125,12 @@ class AppDrawer extends StatelessWidget {
                       label: 'Gallery',
                       onTap: () {
                         Navigator.pop(context);
-                        // TODO: Navigate to gallery
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Gallery feature coming soon!'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
                       },
                     ),
                     _buildMenuItem(
@@ -196,7 +204,7 @@ class AppDrawer extends StatelessWidget {
                               ),
                             ],
                           ),
-                          iOSSwitch(
+                          IOSSwitch(
                             value: isDarkMode,
                             onChanged: (value) {
                               onThemeToggle(); // This still works with your existing setup
@@ -247,7 +255,12 @@ class AppDrawer extends StatelessWidget {
                       label: 'Export Data',
                       onTap: () {
                         Navigator.pop(context);
-                        // TODO: Implement export
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Export feature coming soon!'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
                       },
                     ),
 
@@ -385,10 +398,28 @@ class AppDrawer extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              // TODO: Implement logout
+            onPressed: () async {
+              final security = SecurityService();
+              await security.resetSecurity();
               Navigator.pop(context);
               Navigator.pop(context); // Close drawer
+              // Navigate to PIN setup screen
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PinScreen(
+                    mode: 'setup',
+                    onSuccess: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HomeScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,

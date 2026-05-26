@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/database_service.dart';
-import '../models/person_model.dart';
-import 'add_transaction_screen.dart';
-import 'edit_person_screen.dart';
 import '../services/reminder_service.dart';
+import 'edit_person_screen.dart';
 
 class PersonDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> person;
@@ -137,10 +135,10 @@ class _PersonDetailsScreenState extends State<PersonDetailsScreen> with SingleTi
     if (result == true) {
       _loadData(); // Refresh the data
     }
-    }
+  }
 
-    String _formatAmount(double amount) {
-      return '₹${amount.toStringAsFixed(2)}';
+  String _formatAmount(double amount) {
+    return '₹${amount.toStringAsFixed(2)}';
   }
 
   String _formatDate(int timestamp) {
@@ -514,8 +512,7 @@ class _PersonDetailsScreenState extends State<PersonDetailsScreen> with SingleTi
                                 );
                               }
                             }
-                          
-                      // TODO: Implement settle functionality
+
                     },
                     icon: const Icon(Icons.payment, size: 18),
                     label: const Text('Settle'),
@@ -525,8 +522,38 @@ class _PersonDetailsScreenState extends State<PersonDetailsScreen> with SingleTi
                   ),
                   const SizedBox(width: 8),
                   TextButton.icon(
-                    onPressed: () {
-                      // TODO: Implement remind functionality
+                    onPressed: () async {
+                      try {
+                        final phone = widget.person['phone'] as String?;
+                        final personName = widget.person['name'] as String? ?? 'Unknown';
+                        final pending = (transaction['shareAmount'] as num?)?.toDouble() ?? (transaction['amount'] as num?)?.toDouble() ?? 0;
+
+                        final reminderService = ReminderService();
+                        await reminderService.initialize();
+                        await reminderService.sendReminder(
+                          personName: personName,
+                          amount: pending,
+                          phoneNumber: phone,
+                        );
+
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Reminder sent to $personName'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error sending reminder: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
                     },
                     icon: const Icon(Icons.notifications, size: 18),
                     label: const Text('Remind'),

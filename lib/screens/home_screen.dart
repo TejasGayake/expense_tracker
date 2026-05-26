@@ -1,13 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/database_service.dart';
 import '../widgets/transaction_card.dart';
 import '../widgets/app_drawer.dart';
 import 'add_transaction_screen.dart';
 import 'transaction_detail_screen.dart';
-import 'statistics_screen.dart';
-import 'security_settings_screen.dart';
-import 'search_screen.dart'; // ✅ ADD THIS IMPORT
+import 'search_screen.dart';
 import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -79,6 +78,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ===== SCAN RECEIPT =====
+  final ImagePicker _imagePicker = ImagePicker();
+
   Future<void> _scanReceipt() async {
     showModalBottomSheet(
       context: context,
@@ -101,17 +102,37 @@ class _HomeScreenState extends State<HomeScreen> {
             ListTile(
               leading: const Icon(Icons.camera_alt, color: Colors.blue),
               title: const Text('Take Photo'),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                _showComingSoon('Camera');
+                final photo = await _imagePicker.pickImage(source: ImageSource.camera);
+                if (photo != null && mounted) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddTransactionScreen(
+                        initialAttachmentPath: photo.path,
+                      ),
+                    ),
+                  ).then((_) => _loadTransactions());
+                }
               },
             ),
             ListTile(
               leading: const Icon(Icons.photo_library, color: Colors.blue),
               title: const Text('Choose from Gallery'),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                _showComingSoon('Gallery');
+                final photo = await _imagePicker.pickImage(source: ImageSource.gallery);
+                if (photo != null && mounted) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddTransactionScreen(
+                        initialAttachmentPath: photo.path,
+                      ),
+                    ),
+                  ).then((_) => _loadTransactions());
+                }
               },
             ),
           ],
@@ -382,22 +403,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ===== NAVIGATE TO EDIT TRANSACTION =====
-  Future<void> _navigateToEditTransaction(Map<String, dynamic> transaction) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddTransactionScreen(
-          transactionToEdit: transaction,
-        ),
-      ),
-    );
-    
-    if (result == true) {
-      _loadTransactions();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -622,7 +627,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   TextButton(
                     onPressed: () {
-                      // TODO: View all transactions
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SearchScreen(),
+                        ),
+                      );
                     },
                     child: const Text('See All'),
                   ),

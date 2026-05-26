@@ -285,7 +285,7 @@ class _SyncScreenState extends State<SyncScreen> {
                 });
                 await _syncService.setAutoSyncEnabled(value);
               },
-              activeColor: Theme.of(context).primaryColor,
+              activeThumbColor: Theme.of(context).primaryColor,
             ),
           ),
           

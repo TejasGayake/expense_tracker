@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class iOSSwitch extends StatefulWidget {
+class IOSSwitch extends StatefulWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
   final bool hapticFeedback;
 
-  const iOSSwitch({
+  const IOSSwitch({
     super.key,
     required this.value,
     required this.onChanged,
@@ -14,14 +14,13 @@ class iOSSwitch extends StatefulWidget {
   });
 
   @override
-  State<iOSSwitch> createState() => _iOSSwitchState();
+  State<IOSSwitch> createState() => _IOSSwitchState();
 }
 
-class _iOSSwitchState extends State<iOSSwitch> with SingleTickerProviderStateMixin {
+class _IOSSwitchState extends State<IOSSwitch> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _animation;
-  
-  static const Color iosGreen = Color(0xFF34C759); // iOS green - FIXED COLOR
+
+  static const Color iosGreen = Color(0xFF34C759);
 
   @override
   void initState() {
@@ -30,11 +29,7 @@ class _iOSSwitchState extends State<iOSSwitch> with SingleTickerProviderStateMix
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
-    _animation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut, // ✅ FIXED: Changed from Curves.spring to Curves.easeInOut
-    );
-    
+
     // Set initial position
     if (widget.value) {
       _animationController.value = 1.0;
@@ -42,7 +37,7 @@ class _iOSSwitchState extends State<iOSSwitch> with SingleTickerProviderStateMix
   }
 
   @override
-  void didUpdateWidget(iOSSwitch oldWidget) {
+  void didUpdateWidget(IOSSwitch oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Animate to new position when value changes externally
     if (widget.value != oldWidget.value) {

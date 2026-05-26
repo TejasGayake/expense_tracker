@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/database_service.dart';
-import '../widgets/transaction_card.dart';
 import '../models/category_model.dart';
 import 'transaction_detail_screen.dart';
 

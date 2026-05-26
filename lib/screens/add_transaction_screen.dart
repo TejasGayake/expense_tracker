@@ -10,7 +10,8 @@ import 'split_transaction_screen.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   final Map<String, dynamic>? transactionToEdit;
-  const AddTransactionScreen({super.key, this.transactionToEdit});
+  final String? initialAttachmentPath;
+  const AddTransactionScreen({super.key, this.transactionToEdit, this.initialAttachmentPath});
 
   @override
   State<AddTransactionScreen> createState() => _AddTransactionScreenState();
@@ -53,6 +54,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   void initState() {
     super.initState();
     _loadCategories();
+    if (widget.initialAttachmentPath != null) {
+      _selectedImages.add(File(widget.initialAttachmentPath!));
+    }
     // If we're editing an existing transaction, populate fields
     if (widget.transactionToEdit != null) {
       _loadTransactionForEdit();
