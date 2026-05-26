@@ -1,14 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/pin_screen.dart';
 import 'services/security_service.dart';
-import 'services/database_service.dart'; // ✅ Add this
+import 'services/database_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -30,13 +32,26 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   bool _isFirstTime = true;
   bool _isLoading = true;
   final SecurityService _security = SecurityService();
-  final DatabaseService _db = DatabaseService(); // ✅ Add this
+  final DatabaseService _db = DatabaseService();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _loadThemePreference();
     _checkAuthentication();
+  }
+
+  Future<void> _loadThemePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isDarkMode = prefs.getBool('isDarkMode') ?? false;
+    });
+  }
+
+  Future<void> _saveThemePreference(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkMode', value);
   }
 
   @override
@@ -66,7 +81,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       final isFirstTime = await _security.isFirstTimeSetup();
       final pinEnabled = await _security.isPinEnabled();
       
-      print('Auth Check - shouldShowLock: $shouldShowLock, isFirstTime: $isFirstTime, pinEnabled: $pinEnabled');
+      if (kDebugMode) {
+        print('Auth Check - shouldShowLock: $shouldShowLock, isFirstTime: $isFirstTime, pinEnabled: $pinEnabled');
+      }
       
       // Initialize app if authenticated
       if (pinEnabled && !shouldShowLock) {
@@ -81,7 +98,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error checking authentication: $e');
+      if (kDebugMode) {
+        print('Error checking authentication: $e');
+      }
       setState(() {
         _isAuthenticated = true;
         _isLoading = false;
@@ -92,17 +111,25 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   // ✅ NEW: Initialize app data
   Future<void> _initializeApp() async {
     try {
-      print('🚀 Initializing app data...');
+      if (kDebugMode) {
+        print('🚀 Initializing app data...');
+      }
       await _db.initializeDefaultCategories();
       final categories = await _db.getCategories();
-      print('📊 App initialized with ${categories.length} categories');
+      if (kDebugMode) {
+        print('📊 App initialized with ${categories.length} categories');
+      }
     } catch (e) {
-      print('❌ Error initializing app: $e');
+      if (kDebugMode) {
+        print('❌ Error initializing app: $e');
+      }
     }
   }
 
   void _handleAuthSuccess() async {
-    print('Authentication successful');
+    if (kDebugMode) {
+      print('Authentication successful');
+    }
     await _initializeApp(); // ✅ Initialize after PIN success
     setState(() {
       _isAuthenticated = true;
@@ -113,6 +140,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     setState(() {
       _isDarkMode = !_isDarkMode;
     });
+    _saveThemePreference(_isDarkMode);
   }
 
   @override
@@ -139,7 +167,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   Widget _buildLoadingScreen() {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
