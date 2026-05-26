@@ -8,6 +8,7 @@ import 'screens/pin_screen.dart';
 import 'services/security_service.dart';
 import 'services/database_service.dart';
 import 'services/settings_service.dart';
+import 'services/budget_service.dart';
 import 'screens/onboarding_screen.dart';
 
 void main() {
@@ -144,6 +145,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         print('🚀 Initializing app data...');
       }
       await SettingsService().loadSettings();
+      await BudgetService().loadBudgets();
       await _db.initializeDefaultCategories();
       final categories = await _db.getCategories();
       if (kDebugMode) {

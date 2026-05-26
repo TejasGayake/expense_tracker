@@ -30,7 +30,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
     try {
       final categories = await _db.getCategories();
-      final budgets = await _budgetService.getAllBudgets();
+      final budgets = _budgetService.getAllBudgets();
       final transactions = await _db.getTransactions();
 
       final now = DateTime.now();

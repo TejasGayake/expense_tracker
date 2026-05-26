@@ -8,28 +8,36 @@ class BudgetService {
 
   static const String _budgetKey = 'category_budgets';
 
+  Map<String, double> _budgets = {};
+
+  /// Cached budgets (read-only view)
+  Map<String, double> get budgets => Map.unmodifiable(_budgets);
+
+  /// Pre-load budgets into memory (call at app startup)
+  Future<void> loadBudgets() async {
+    _budgets = await _fetchBudgets();
+  }
+
   /// Set budget for a category (monthly)
   Future<void> setBudget(String category, double amount) async {
-    final budgets = await getAllBudgets();
-    budgets[category] = amount;
-    await _saveBudgets(budgets);
+    _budgets[category] = amount;
+    await _saveBudgets(_budgets);
   }
 
   /// Remove budget for a category
   Future<void> removeBudget(String category) async {
-    final budgets = await getAllBudgets();
-    budgets.remove(category);
-    await _saveBudgets(budgets);
+    _budgets.remove(category);
+    await _saveBudgets(_budgets);
   }
 
-  /// Get budget for a category
-  Future<double?> getBudget(String category) async {
-    final budgets = await getAllBudgets();
-    return budgets[category];
-  }
+  /// Get budget for a category (synchronous, uses cache)
+  double? getBudget(String category) => _budgets[category];
 
-  /// Get all budgets
-  Future<Map<String, double>> getAllBudgets() async {
+  /// Get all budgets (synchronous, uses cache)
+  Map<String, double> getAllBudgets() => Map.unmodifiable(_budgets);
+
+  /// Fetch budgets from SharedPreferences
+  Future<Map<String, double>> _fetchBudgets() async {
     final prefs = await SharedPreferences.getInstance();
     final json_str = prefs.getString(_budgetKey);
     if (json_str == null) return {};
@@ -38,8 +46,8 @@ class BudgetService {
   }
 
   /// Check if a category is over budget
-  Future<BudgetStatus> checkBudget(String category, double spent) async {
-    final budget = await getBudget(category);
+  BudgetStatus checkBudget(String category, double spent) {
+    final budget = _budgets[category];
     if (budget == null) return BudgetStatus.noBudget;
     if (spent >= budget) return BudgetStatus.exceeded;
     if (spent >= budget * 0.8) return BudgetStatus.warning;

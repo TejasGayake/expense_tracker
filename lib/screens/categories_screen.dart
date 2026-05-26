@@ -100,13 +100,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
     }
   }
 
-  void _showBudgetDialog(CategoryModel category) async {
+  void _showBudgetDialog(CategoryModel category) {
     final TextEditingController amountController = TextEditingController();
-    final existingBudget = await _budgetService.getBudget(category.id!);
+    final existingBudget = _budgetService.getBudget(category.id!);
     if (existingBudget != null) {
       amountController.text = existingBudget.toStringAsFixed(0);
     }
-    if (!mounted) return;
 
     showDialog(
       context: context,

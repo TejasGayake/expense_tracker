@@ -6,6 +6,7 @@ import '../widgets/transaction_card.dart';
 import '../widgets/app_drawer.dart';
 import '../utils/page_transitions.dart';
 import 'add_transaction_screen.dart';
+import 'add_income_screen.dart';
 import 'transaction_detail_screen.dart';
 import 'search_screen.dart';
 import 'package:intl/intl.dart';
@@ -30,8 +31,11 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _transactions = [];
   List<Map<String, dynamic>> _pendingPeople = [];
   double _totalSpent = 0;
+  double _totalIncome = 0;
   double _pendingAmount = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  String _selectedFilter = 'This Month';
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -43,25 +47,63 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final transactionsData = await _db.getTransactionsWithPeople();
       final pendingData = await _db.getPendingAmounts();
-      
+
       double totalPending = 0;
-      
+
       for (var person in pendingData) {
         totalPending += (person['owedToMe'] as num?)?.toDouble() ?? 0;
       }
-      
-      double total = 0;
-      for (var txn in transactionsData) {
-        total += (txn['amount'] as num?)?.toDouble() ?? 0;
+
+      // Apply date filter
+      final now = DateTime.now();
+      List<Map<String, dynamic>> filtered;
+      switch (_selectedFilter) {
+        case 'Today':
+          final todayStart = DateTime(now.year, now.month, now.day);
+          filtered = transactionsData.where((t) {
+            final date = DateTime.fromMillisecondsSinceEpoch(t['date'] as int);
+            return date.isAfter(todayStart);
+          }).toList();
+          break;
+        case 'This Week':
+          final weekStart = now.subtract(Duration(days: now.weekday - 1));
+          final weekStartDate = DateTime(weekStart.year, weekStart.month, weekStart.day);
+          filtered = transactionsData.where((t) {
+            final date = DateTime.fromMillisecondsSinceEpoch(t['date'] as int);
+            return date.isAfter(weekStartDate);
+          }).toList();
+          break;
+        case 'This Month':
+          final monthStart = DateTime(now.year, now.month, 1);
+          filtered = transactionsData.where((t) {
+            final date = DateTime.fromMillisecondsSinceEpoch(t['date'] as int);
+            return date.isAfter(monthStart);
+          }).toList();
+          break;
+        default:
+          filtered = transactionsData;
       }
-      
+
+      double totalExpenses = 0;
+      double totalIncome = 0;
+      for (var txn in filtered) {
+        final amount = (txn['amount'] as num?)?.toDouble() ?? 0;
+        final type = txn['type'] as String? ?? 'expense';
+        if (type == 'income') {
+          totalIncome += amount;
+        } else {
+          totalExpenses += amount;
+        }
+      }
+
       setState(() {
-        _transactions = transactionsData;
+        _transactions = filtered;
         _pendingPeople = pendingData;
-        _totalSpent = total;
+        _totalSpent = totalExpenses;
+        _totalIncome = totalIncome;
         _pendingAmount = totalPending;
       });
-      
+
     } catch (e) {
       if (kDebugMode) {
         print('Error loading transactions: $e');
@@ -487,10 +529,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: StaggeredSlideIn(
                       index: 0,
                       child: _buildSummaryCard(
-                        title: 'Total Spent',
-                        amount: _totalSpent,
-                        icon: Icons.trending_down,
-                        color: Colors.red,
+                        title: 'Income',
+                        amount: _totalIncome,
+                        icon: Icons.trending_up,
+                        color: Colors.green,
                       ),
                     ),
                   ),
@@ -499,17 +541,56 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: StaggeredSlideIn(
                       index: 1,
                       child: _buildSummaryCard(
-                        title: 'Pending',
-                        amount: _pendingAmount,
-                        icon: Icons.access_time,
-                        color: Colors.orange,
+                        title: 'Expenses',
+                        amount: _totalSpent,
+                        icon: Icons.trending_down,
+                        color: Colors.red,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            
+            // Net Balance
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: StaggeredSlideIn(
+                index: 2,
+                child: _buildNetBalanceCard(),
+              ),
+            ),
+
+            // Quick Filters
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: ['Today', 'This Week', 'This Month', 'All'].map((filter) {
+                    final isSelected = _selectedFilter == filter;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text(filter),
+                        selected: isSelected,
+                        onSelected: (_) {
+                          setState(() => _selectedFilter = filter);
+                          _loadTransactions();
+                        },
+                        selectedColor: Theme.of(context).primaryColor.withOpacity(0.15),
+                        labelStyle: TextStyle(
+                          color: isSelected ? Theme.of(context).primaryColor : Colors.grey[600],
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                        showCheckmark: false,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // Quick Actions with staggered entrance
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -517,7 +598,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   StaggeredSlideIn(
-                    index: 2,
+                    index: 3,
                     child: _buildActionButton(
                       icon: Icons.add,
                       label: 'Add',
@@ -525,7 +606,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   StaggeredSlideIn(
-                    index: 3,
+                    index: 4,
+                    child: _buildActionButton(
+                      icon: Icons.savings,
+                      label: 'Income',
+                      onTap: _navigateToAddIncome,
+                    ),
+                  ),
+                  StaggeredSlideIn(
+                    index: 5,
                     child: _buildActionButton(
                       icon: Icons.camera_alt,
                       label: 'Scan',
@@ -533,19 +622,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   StaggeredSlideIn(
-                    index: 4,
+                    index: 6,
                     child: _buildActionButton(
                       icon: Icons.people,
                       label: 'Split',
                       onTap: _manageSplit,
-                    ),
-                  ),
-                  StaggeredSlideIn(
-                    index: 5,
-                    child: _buildActionButton(
-                      icon: Icons.notifications,
-                      label: 'Remind',
-                      onTap: _showReminders,
                     ),
                   ),
                 ],
@@ -656,7 +737,36 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            
+
+            // Quick Filter Chips
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: ['Today', 'This Week', 'This Month', 'All'].map((filter) {
+                  final isSelected = _selectedFilter == filter;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: Text(filter),
+                      selected: isSelected,
+                      onSelected: (_) {
+                        setState(() => _selectedFilter = filter);
+                        _loadTransactions();
+                      },
+                      selectedColor: Theme.of(context).primaryColor.withOpacity(0.15),
+                      labelStyle: TextStyle(
+                        color: isSelected ? Theme.of(context).primaryColor : Colors.grey[600],
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        fontSize: 12,
+                      ),
+                      showCheckmark: false,
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 8),
+
             // Transactions List with staggered entrance
             _transactions.isEmpty
                 ? _buildEmptyState()
@@ -854,6 +964,64 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildNetBalanceCard() {
+    final netBalance = _totalIncome - _totalSpent;
+    final isPositive = netBalance >= 0;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isPositive
+              ? [Colors.green.shade400, Colors.green.shade600]
+              : [Colors.red.shade400, Colors.red.shade600],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: (isPositive ? Colors.green : Colors.red).withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isPositive ? Icons.account_balance_wallet : Icons.warning,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Net Balance',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            '${isPositive ? '+' : ''}${_formatAmount(netBalance)}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _navigateToAddTransaction() async {
     final result = await Navigator.push(
       context,
@@ -861,7 +1029,20 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context) => const AddTransactionScreen(),
       ),
     );
-    
+
+    if (result == true) {
+      _loadTransactions();
+    }
+  }
+
+  Future<void> _navigateToAddIncome() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddIncomeScreen(),
+      ),
+    );
+
     if (result == true) {
       _loadTransactions();
     }
