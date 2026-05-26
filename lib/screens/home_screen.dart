@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/database_service.dart';
 import '../widgets/transaction_card.dart';
+import '../widgets/skeleton_loader.dart';
 import '../widgets/app_drawer.dart';
 import '../utils/page_transitions.dart';
 import 'add_transaction_screen.dart';
@@ -102,12 +103,14 @@ class _HomeScreenState extends State<HomeScreen> {
         _totalSpent = totalExpenses;
         _totalIncome = totalIncome;
         _pendingAmount = totalPending;
+        _isLoading = false;
       });
 
     } catch (e) {
       if (kDebugMode) {
         print('Error loading transactions: $e');
       }
+      setState(() => _isLoading = false);
     }
   }
 
