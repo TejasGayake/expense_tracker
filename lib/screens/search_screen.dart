@@ -68,7 +68,7 @@ class _SearchScreenState extends State<SearchScreen> {
       _searchResults = _allTransactions.where((txn) {
         final description = (txn['description'] as String? ?? '').toLowerCase();
         final amount = txn['amount'].toString();
-        final category = (txn['category'] as String? ?? '').toLowerCase();
+        final category = ((txn['categoryName'] ?? txn['category']) as String? ?? '').toLowerCase();
         final notes = (txn['notes'] as String? ?? '').toLowerCase();
         
         // Parse people info if available
@@ -166,7 +166,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final date = DateTime.fromMillisecondsSinceEpoch(transaction['date']);
     final formattedDate = DateFormat('MMM d, yyyy • h:mm a').format(date);
     final amount = (transaction['amount'] as num).toDouble();
-    final category = transaction['category'] ?? 'Other';
+    final category = transaction['categoryName'] ?? transaction['category'] ?? 'Other';
     
     // Highlight the matching text if needed
     final query = _searchController.text.toLowerCase();

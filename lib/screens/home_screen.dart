@@ -423,6 +423,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // 🔍 SEARCH BUTTON - ADDED HERE
           IconButton(
             icon: const Icon(Icons.search),
+            tooltip: 'Search transactions',
             onPressed: () {
               Navigator.push(
                 context,
@@ -708,7 +709,9 @@ class _HomeScreenState extends State<HomeScreen> {
     required IconData icon,
     required Color color,
   }) {
-    return Container(
+    return Semantics(
+      label: '$title: ${_formatAmount(amount)}',
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
@@ -746,6 +749,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

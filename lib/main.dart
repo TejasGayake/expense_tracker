@@ -8,6 +8,7 @@ import 'screens/pin_screen.dart';
 import 'services/security_service.dart';
 import 'services/database_service.dart';
 import 'services/settings_service.dart';
+import 'screens/onboarding_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +33,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   bool _isAuthenticated = false;
   bool _isFirstTime = true;
   bool _isLoading = true;
+  bool _showOnboarding = false;
   final SecurityService _security = SecurityService();
   final DatabaseService _db = DatabaseService();
 
@@ -112,6 +114,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         await _initializeApp();
       }
 
+      // Check onboarding for first-time users without PIN
+      final prefs = await SharedPreferences.getInstance();
+      final onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
+      if (!onboardingComplete && !pinEnabled) {
+        _showOnboarding = true;
+      }
+
       setState(() {
         _isAuthenticated = pinEnabled ? !shouldShowLock : true;
         _isFirstTime = isFirstTime;
@@ -174,15 +183,20 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
       home: _isLoading
           ? _buildLoadingScreen()
-          : _isAuthenticated
-              ? HomeScreen(
-                  onThemeToggle: _toggleTheme,
+          : _showOnboarding
+              ? OnboardingScreen(
                   isDarkMode: _isDarkMode,
+                  onThemeToggle: _toggleTheme,
                 )
-              : PinScreen(
-                  isSetup: _isFirstTime,
-                  onSuccess: _handleAuthSuccess,
-                ),
+              : _isAuthenticated
+                  ? HomeScreen(
+                      onThemeToggle: _toggleTheme,
+                      isDarkMode: _isDarkMode,
+                    )
+                  : PinScreen(
+                      isSetup: _isFirstTime,
+                      onSuccess: _handleAuthSuccess,
+                    ),
     );
   }
 

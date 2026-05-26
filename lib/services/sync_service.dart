@@ -6,13 +6,14 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:bonsoir/bonsoir.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'database_service.dart';
+import 'sync_encryption_service.dart';
 
 class SyncService {
   static const String serviceType = '_expensetracker._tcp';
   static const int syncPort = 8080;
   
   final DatabaseService _db = DatabaseService();
-  
+
   // Server instance (for Windows)
   HttpServer? _server;
   BonsoirService? _bonsoirService;
@@ -187,34 +188,50 @@ class SyncService {
     if (kDebugMode) {
       print('📥 Received sync request');
     }
-    
+
     try {
       // Parse request body
-      final content = await utf8.decoder.bind(request).join();
-      json.decode(content); // parse but don't use for now
-      
-      // In a real implementation, we'd merge client and server data
-      // For now, we'll just export our data
-      
+      final rawContent = await utf8.decoder.bind(request).join();
+      final data = json.decode(rawContent);
+
+      // Decrypt if encrypted
+      final encryptionService = SyncEncryptionService();
+      final syncKey = await encryptionService.getKey();
+
+      if (data['encrypted'] == true && syncKey != null) {
+        encryptionService.decryptJson(data['data'], syncKey);
+        if (kDebugMode) {
+          print('🔓 Decrypted sync payload');
+        }
+      }
+
       // Get local changes
       final localTransactions = await _exportTransactions();
-      
+      final localPeople = await _exportPeople();
+
       // Prepare response
-      final response = {
+      final Map<String, dynamic> responseData = {
         'status': 'success',
         'serverTime': DateTime.now().toIso8601String(),
-        'transactions': localTransactions,
-        'people': await _exportPeople(),
+        'encrypted': syncKey != null,
       };
-      
+
+      if (syncKey != null) {
+        responseData['data'] = encryptionService.encryptJson({
+          'transactions': localTransactions,
+          'people': localPeople,
+        }, syncKey);
+      } else {
+        responseData['transactions'] = localTransactions;
+        responseData['people'] = localPeople;
+      }
+
       request.response.statusCode = HttpStatus.ok;
       request.response.headers.contentType = ContentType.json;
-      request.response.write(json.encode(response));
+      request.response.write(json.encode(responseData));
       await request.response.close();
-      
-      // Update last sync time
+
       await _updateLastSyncTime();
-      
       _updateStatus('Sync completed');
       if (kDebugMode) {
         print('✅ Sync completed');
@@ -353,37 +370,70 @@ class SyncService {
   Future<void> syncWithServer(String ip, int port) async {
     try {
       _updateStatus('Syncing...');
-      
+
       final client = HttpClient();
       final url = Uri.parse('http://$ip:$port/sync');
-      
+
       // Get local transactions
       final localTransactions = await _exportTransactions();
       final lastSync = await _getLastSyncTime();
-      
+
+      // Encrypt payload if key exists
+      final encryptionService = SyncEncryptionService();
+      final syncKey = await encryptionService.getKey();
+
+      final Map<String, dynamic> payload = {
+        'transactions': localTransactions,
+        'lastSync': lastSync?.toIso8601String(),
+        'encrypted': syncKey != null,
+      };
+
+      if (syncKey != null) {
+        payload['data'] = encryptionService.encryptJson({
+          'transactions': localTransactions,
+          'lastSync': lastSync?.toIso8601String(),
+        }, syncKey);
+        payload.remove('transactions');
+        payload.remove('lastSync');
+      }
+
+      payload['device'] = Platform.operatingSystem;
+
       // Prepare request
       final request = await client.postUrl(url);
       request.headers.contentType = ContentType.json;
-      request.write(json.encode({
-        'transactions': localTransactions,
-        'lastSync': lastSync?.toIso8601String(),
-        'device': Platform.operatingSystem,
-      }));
-      
+      request.write(json.encode(payload));
+
       // Get response
       final response = await request.close();
       final responseBody = await response.transform(utf8.decoder).join();
-      
+
       if (response.statusCode == HttpStatus.ok) {
         final data = json.decode(responseBody);
-        
-        // Import server transactions
-        if (data['transactions'] != null) {
-          await _importTransactions(data['transactions']);
+
+        // Decrypt response if encrypted
+        List<dynamic>? transactions = data['transactions'];
+        List<dynamic>? people = data['people'];
+
+        if (data['encrypted'] == true && syncKey != null) {
+          final decrypted = encryptionService.decryptJson(data['data'], syncKey);
+          transactions = decrypted['transactions'];
+          people = decrypted['people'];
         }
-        
-        if (data['people'] != null) {
-          await _importPeople(data['people']);
+
+        if (data['encrypted'] == true && syncKey != null) {
+          final decrypted = encryptionService.decryptJson(data['data'], syncKey);
+          transactions = decrypted['transactions'];
+          people = decrypted['people'];
+        }
+
+        // Import server transactions
+        if (transactions != null) {
+          await _importTransactions(transactions);
+        }
+
+        if (people != null) {
+          await _importPeople(people);
         }
         
         await _updateLastSyncTime();

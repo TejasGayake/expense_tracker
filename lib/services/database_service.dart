@@ -585,19 +585,22 @@ class DatabaseService {
 
   Future<List<Map<String, dynamic>>> getTransactions() async {
     Database db = await database;
-    return await db.query(
-      'transactions',
-      orderBy: 'date DESC',
-    );
+    return await db.rawQuery('''
+      SELECT t.*, c.name as categoryName, c.icon as categoryIcon, c.color as categoryColor
+      FROM transactions t
+      LEFT JOIN categories c ON t.categoryId = c.id
+      ORDER BY t.date DESC
+    ''');
   }
 
   Future<Map<String, dynamic>?> getTransactionById(String id) async {
     Database db = await database;
-    final results = await db.query(
-      'transactions',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final results = await db.rawQuery('''
+      SELECT t.*, c.name as categoryName, c.icon as categoryIcon, c.color as categoryColor
+      FROM transactions t
+      LEFT JOIN categories c ON t.categoryId = c.id
+      WHERE t.id = ?
+    ''', [id]);
     return results.isNotEmpty ? results.first : null;
   }
 
@@ -973,10 +976,12 @@ class DatabaseService {
     
     try {
       final results = await db.rawQuery('''
-        SELECT 
+        SELECT
           t.*,
+          c.name as categoryName, c.icon as categoryIcon, c.color as categoryColor,
           GROUP_CONCAT(p.name || ':' || COALESCE(tp.amount, 0) || ':' || tp.direction || ':' || tp.status) as peopleInfo
         FROM transactions t
+        LEFT JOIN categories c ON t.categoryId = c.id
         LEFT JOIN transaction_people tp ON t.id = tp.transactionId
         LEFT JOIN people p ON tp.personId = p.id
         GROUP BY t.id

@@ -314,7 +314,10 @@ class _PinScreenState extends State<PinScreen>
           return Expanded(
             child: Padding(
               padding: const EdgeInsets.all(8),
-              child: Material(
+              child: Semantics(
+                label: key == '⌫' ? 'Backspace' : key == '✓' ? 'Confirm' : 'Key $key',
+                button: true,
+                child: Material(
                 color: key == '⌫' || key == '✓'
                     ? Theme.of(context).primaryColor.withOpacity(0.1)
                     : Colors.transparent,
@@ -326,9 +329,15 @@ class _PinScreenState extends State<PinScreen>
                   highlightColor: Theme.of(context).primaryColor.withOpacity(0.08),
                   child: Center(
                     child: key == '⌫'
-                        ? const Icon(Icons.backspace_outlined)
+                        ? const Tooltip(
+                            message: 'Backspace',
+                            child: Icon(Icons.backspace_outlined),
+                          )
                         : key == '✓'
-                            ? const Icon(Icons.check)
+                            ? const Tooltip(
+                                message: 'Confirm',
+                                child: Icon(Icons.check),
+                              )
                             : Text(
                                 key,
                                 style: const TextStyle(
@@ -338,6 +347,7 @@ class _PinScreenState extends State<PinScreen>
                               ),
                   ),
                 ),
+              ),
               ),
             ),
           );

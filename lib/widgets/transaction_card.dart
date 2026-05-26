@@ -19,7 +19,14 @@ class TransactionCard extends StatelessWidget {
     final hasPeople = transaction['peopleInfo'] != null;
     final txnId = transaction['id'] as String? ?? '';
 
-    return Padding(
+    final description = transaction['description'] ?? 'No description';
+    final categoryName = (transaction['categoryName'] ?? transaction['category']) as String? ?? 'Other';
+    final amount = transaction['amount'] as num;
+
+    return Semantics(
+      label: '${description}, ${categoryName}, ${amount.toStringAsFixed(2)} rupees',
+      button: true,
+      child: Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
         color: Theme.of(context).cardTheme.color,
@@ -50,11 +57,11 @@ class TransactionCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: getCategoryColor(transaction['category'] as String?).withOpacity(0.1),
+                      color: getCategoryColor((transaction['categoryName'] ?? transaction['category']) as String?).withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Text(
-                      getCategoryIcon(transaction['category'] as String?),
+                      getCategoryIcon((transaction['categoryName'] ?? transaction['category']) as String?),
                       style: const TextStyle(fontSize: 24),
                     ),
                   ),
@@ -150,6 +157,7 @@ class TransactionCard extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

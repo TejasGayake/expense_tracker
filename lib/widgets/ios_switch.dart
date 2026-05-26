@@ -24,7 +24,11 @@ class IOSSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Semantics(
+      label: 'Toggle switch',
+      toggled: value,
+      onTap: () => _handleTap(context),
+      child: GestureDetector(
       onTap: () => _handleTap(context),
       child: Container(
         width: 51,
@@ -79,6 +83,7 @@ class IOSSwitch extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
