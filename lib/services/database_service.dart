@@ -24,7 +24,7 @@ class DatabaseService {
     
     return await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -43,6 +43,7 @@ class DatabaseService {
         paymentMode TEXT,
         location TEXT,
         notes TEXT,
+        type TEXT DEFAULT 'expense',
         createdAt INTEGER,
         updatedAt INTEGER
       )
@@ -266,6 +267,25 @@ class DatabaseService {
       } catch (e) {
         if (kDebugMode) {
           print('Migration error (v4->v5): $e');
+        }
+      }
+    }
+
+    // Upgrade from version 5 to 6 - Add type column for income tracking
+    if (oldVersion < 6) {
+      try {
+        final tableInfo = await db.rawQuery("PRAGMA table_info(transactions)");
+        final hasType = tableInfo.any((column) => column['name'] == 'type');
+
+        if (!hasType) {
+          await db.execute("ALTER TABLE transactions ADD COLUMN type TEXT DEFAULT 'expense'");
+          if (kDebugMode) {
+            print('✅ Added type column to transactions table');
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Migration error (v5->v6): $e');
         }
       }
     }

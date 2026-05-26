@@ -13,6 +13,8 @@ import '../services/settings_service.dart';
 import 'ios_switch.dart';
 import 'package:expense_tracker/widgets/footers/footer_manager.dart';
 import '../screens/animation_settings_screen.dart';
+import '../screens/budget_screen.dart';
+import '../screens/subscription_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   final VoidCallback onThemeToggle;
@@ -145,6 +147,34 @@ class AppDrawer extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => const CategoriesScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildMenuItem(
+                      context,
+                      icon: Icons.account_balance_wallet,
+                      label: 'Budgets',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BudgetScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildMenuItem(
+                      context,
+                      icon: Icons.subscriptions,
+                      label: 'Subscriptions',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SubscriptionScreen(),
                           ),
                         );
                       },

@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
+import '../services/budget_service.dart';
+import '../services/settings_service.dart';
 import '../models/category_model.dart';
 import 'add_edit_category_screen.dart';
 
@@ -13,6 +15,7 @@ class CategoriesScreen extends StatefulWidget {
 
 class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerProviderStateMixin {
   final DatabaseService _db = DatabaseService();
+  final BudgetService _budgetService = BudgetService();
   List<CategoryModel> _categories = [];
   List<CategoryModel> _filteredCategories = [];
   bool _isLoading = true;
@@ -95,6 +98,73 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
     if (result == true) {
       _loadCategories();
     }
+  }
+
+  void _showBudgetDialog(CategoryModel category) async {
+    final TextEditingController amountController = TextEditingController();
+    final existingBudget = await _budgetService.getBudget(category.id!);
+    if (existingBudget != null) {
+      amountController.text = existingBudget.toStringAsFixed(0);
+    }
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Set Budget for ${category.name}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Set a monthly budget for ${category.name}.',
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: amountController,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: 'Monthly Budget Amount',
+                prefixText: SettingsService().currencySymbol,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          if (existingBudget != null)
+            TextButton(
+              onPressed: () async {
+                await _budgetService.removeBudget(category.id!);
+                if (context.mounted) Navigator.pop(context);
+                _loadCategories();
+              },
+              child: const Text('Remove Budget', style: TextStyle(color: Colors.red)),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final text = amountController.text.trim();
+              final amount = double.tryParse(text);
+              if (amount != null && amount > 0) {
+                await _budgetService.setBudget(category.id!, amount);
+                if (context.mounted) Navigator.pop(context);
+                _loadCategories();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a valid amount')),
+                );
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _confirmDelete(CategoryModel category) async {
@@ -251,6 +321,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.account_balance_wallet,
+                    size: 20,
+                    color: _budgetService.getBudget(category.id!) != null
+                        ? Colors.green
+                        : Colors.grey,
+                  ),
+                  onPressed: () => _showBudgetDialog(category),
+                  tooltip: 'Set Budget',
+                ),
                 if (!category.isDefault) ...[
                   IconButton(
                     icon: const Icon(Icons.edit, size: 20),

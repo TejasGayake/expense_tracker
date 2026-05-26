@@ -5,11 +5,13 @@ import '../models/category_model.dart';
 class TransactionCard extends StatelessWidget {
   final Map<String, dynamic> transaction;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   const TransactionCard({
     super.key,
     required this.transaction,
     required this.onTap,
+    this.onDelete,
   });
 
   @override
@@ -23,141 +25,180 @@ class TransactionCard extends StatelessWidget {
     final categoryName = (transaction['categoryName'] ?? transaction['category']) as String? ?? 'Other';
     final amount = transaction['amount'] as num;
 
-    return Semantics(
-      label: '${description}, ${categoryName}, ${amount.toStringAsFixed(2)} rupees',
-      button: true,
-      child: Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(16),
-        elevation: 0,
-        child: InkWell(
-          onTap: onTap,
+    return Dismissible(
+      key: Key('txn_$txnId'),
+      direction: onDelete != null
+          ? DismissDirection.endToStart
+          : DismissDirection.none,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 24),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.red.shade400,
           borderRadius: BorderRadius.circular(16),
-          splashColor: Theme.of(context).primaryColor.withOpacity(0.08),
-          highlightColor: Theme.of(context).primaryColor.withOpacity(0.04),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
+        ),
+        child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
+      ),
+      confirmDismiss: (direction) async {
+        return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Delete Transaction'),
+            content: const Text('Are you sure you want to delete this transaction?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+        );
+      },
+      onDismissed: (direction) {
+        onDelete?.call();
+      },
+      child: Semantics(
+        label: '$description, $categoryName, ${amount.toStringAsFixed(2)} rupees',
+        button: true,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Material(
+            color: Theme.of(context).cardTheme.color,
+            borderRadius: BorderRadius.circular(16),
+            elevation: 0,
+            child: InkWell(
+              onTap: onTap,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                // Category Icon with Hero
-                Hero(
-                  tag: 'txn_icon_$txnId',
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: getCategoryColor((transaction['categoryName'] ?? transaction['category']) as String?).withOpacity(0.1),
-                      shape: BoxShape.circle,
+              splashColor: Theme.of(context).primaryColor.withOpacity(0.08),
+              highlightColor: Theme.of(context).primaryColor.withOpacity(0.04),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
-                    child: Text(
-                      getCategoryIcon((transaction['categoryName'] ?? transaction['category']) as String?),
-                      style: const TextStyle(fontSize: 24),
-                    ),
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 16),
+                child: Row(
+                  children: [
+                    // Category Icon with Hero
+                    Hero(
+                      tag: 'txn_icon_$txnId',
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: getCategoryColor(categoryName).withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          getCategoryIcon(categoryName),
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
 
-                // Transaction Details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        transaction['description'] ?? 'No description',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    // Transaction Details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            description,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            formattedDate,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          if (hasPeople)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.people,
+                                    size: 12,
+                                    color: Colors.grey[500],
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Split',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        formattedDate,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
+                    ),
+
+                    // Amount with Hero
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Hero(
+                          tag: 'txn_amount_$txnId',
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: Text(
+                              '₹${amount.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      if (hasPeople)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Row(
-                            children: [
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (transaction['hasAttachment'] == true)
                               Icon(
-                                Icons.people,
-                                size: 12,
+                                Icons.attach_file,
+                                size: 14,
                                 color: Colors.grey[500],
                               ),
+                            if (transaction['notes'] != null) ...[
                               const SizedBox(width: 4),
-                              Text(
-                                'Split',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey[500],
-                                ),
+                              Icon(
+                                Icons.note_outlined,
+                                size: 14,
+                                color: Colors.grey[500],
                               ),
                             ],
-                          ),
+                          ],
                         ),
-                    ],
-                  ),
-                ),
-
-                // Amount with Hero
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Hero(
-                      tag: 'txn_amount_$txnId',
-                      child: Material(
-                        type: MaterialType.transparency,
-                        child: Text(
-                          '₹${transaction['amount'].toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (transaction['hasAttachment'] == true)
-                          Icon(
-                            Icons.attach_file,
-                            size: 14,
-                            color: Colors.grey[500],
-                          ),
-                        if (transaction['notes'] != null) ...[
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.note_outlined,
-                            size: 14,
-                            color: Colors.grey[500],
-                          ),
-                        ],
                       ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
 }

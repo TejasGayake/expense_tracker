@@ -686,6 +686,29 @@ class _HomeScreenState extends State<HomeScreen> {
                               }
                             });
                           },
+                          onDelete: () async {
+                            final txnId = txn['id'] as String;
+                            final txnCopy = Map<String, dynamic>.from(txn);
+                            await _db.deleteTransaction(txnId);
+                            await _loadTransactions();
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).clearSnackBars();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('Transaction deleted'),
+                                  action: SnackBarAction(
+                                    label: 'Undo',
+                                    textColor: Colors.yellow,
+                                    onPressed: () async {
+                                      await _db.insertTransaction(txnCopy);
+                                      await _loadTransactions();
+                                    },
+                                  ),
+                                  duration: const Duration(seconds: 5),
+                                ),
+                              );
+                            }
+                          },
                         ),
                       );
                     },
