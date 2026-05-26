@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
 import '../models/category_model.dart';
@@ -46,7 +47,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading categories: $e');
+      if (kDebugMode) {
+        print('Error loading categories: $e');
+      }
       setState(() => _isLoading = false);
     }
   }
@@ -184,23 +187,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
               ),
             ),
           ),
-          // ========================================
-
-          // Add this to the build method, above the categories list
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search categories...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-          // ========================================
           // Categories List
           Expanded(
             child: _isLoading
