@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -30,7 +31,9 @@ class AnimationService {
         await prefs.setInt(_animationPrefKey, FooterAnimationType.flowing.index);
       }
     } catch (e) {
-      print('Error loading animation preference: $e');
+      if (kDebugMode) {
+        print('Error loading animation preference: $e');
+      }
     }
   }
   
@@ -40,7 +43,9 @@ class AnimationService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_animationPrefKey, type.index);
     } catch (e) {
-      print('Error saving animation preference: $e');
+      if (kDebugMode) {
+        print('Error saving animation preference: $e');
+      }
     }
   }
   

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
 import 'add_person_screen.dart';
@@ -107,7 +108,9 @@ class _SplitTransactionScreenState extends State<SplitTransactionScreen> {
         );
       }
     } catch (e) {
-      print('Error saving split: $e');
+      if (kDebugMode) {
+        print('Error saving split: $e');
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

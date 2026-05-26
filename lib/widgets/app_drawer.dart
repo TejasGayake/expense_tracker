@@ -5,7 +5,6 @@ import '../screens/sync_screen.dart';
 import '../screens/categories_screen.dart';
 import '../screens/search_screen.dart';
 import '../screens/people_screen.dart';
-import '../services/security_service.dart';
 import 'ios_switch.dart'; // needed for the custom toggle widget
 import 'package:expense_tracker/widgets/footers/footer_manager.dart';
 import '../screens/animation_settings_screen.dart';

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
@@ -100,7 +101,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
         );
       }
     } catch (e) {
-      print('Error deleting transaction: $e');
+      if (kDebugMode) {
+        print('Error deleting transaction: $e');
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

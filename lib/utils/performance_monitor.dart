@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class PerformanceMonitor {
@@ -11,14 +12,18 @@ class PerformanceMonitor {
     final timer = _timers[operation];
     if (timer != null) {
       timer.stop();
-      print('⏱️ [PERF] $operation took: ${timer.elapsedMilliseconds}ms');
+      if (kDebugMode) {
+        print('⏱️ [PERF] $operation took: ${timer.elapsedMilliseconds}ms');
+      }
       _timers.remove(operation);
     }
   }
   
   static void logFrameTime(String operation, Duration duration) {
     if (duration.inMilliseconds > 16) { // 60fps = ~16ms per frame
-      print('⚠️ [PERF] $operation took ${duration.inMilliseconds}ms (exceeds 16ms)');
+      if (kDebugMode) {
+        print('⚠️ [PERF] $operation took ${duration.inMilliseconds}ms (exceeds 16ms)');
+      }
     }
   }
   

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
@@ -20,7 +21,9 @@ class AttachmentService {
         return File(pickedFile.path);
       }
     } catch (e) {
-      print('Error picking image from camera: $e');
+      if (kDebugMode) {
+        print('Error picking image from camera: $e');
+      }
     }
     return null;
   }
@@ -39,7 +42,9 @@ class AttachmentService {
         return File(pickedFile.path);
       }
     } catch (e) {
-      print('Error picking image from gallery: $e');
+      if (kDebugMode) {
+        print('Error picking image from gallery: $e');
+      }
     }
     return null;
   }
@@ -58,7 +63,9 @@ class AttachmentService {
         images.add(File(file.path));
       }
     } catch (e) {
-      print('Error picking multiple images: $e');
+      if (kDebugMode) {
+        print('Error picking multiple images: $e');
+      }
     }
     return images;
   }
@@ -90,7 +97,9 @@ class AttachmentService {
       return savedImage.path;
       
     } catch (e) {
-      print('Error saving image: $e');
+      if (kDebugMode) {
+        print('Error saving image: $e');
+      }
       return null;
     }
   }
@@ -103,7 +112,9 @@ class AttachmentService {
         await file.delete();
       }
     } catch (e) {
-      print('Error deleting image: $e');
+      if (kDebugMode) {
+        print('Error deleting image: $e');
+      }
     }
   }
 
@@ -123,7 +134,9 @@ class AttachmentService {
         }
       }
     } catch (e) {
-      print('Error getting attachments: $e');
+      if (kDebugMode) {
+        print('Error getting attachments: $e');
+      }
     }
     return attachments;
   }

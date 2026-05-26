@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
 import 'add_person_screen.dart';
@@ -59,7 +60,9 @@ class _PeopleScreenState extends State<PeopleScreen> with SingleTickerProviderSt
     setState(() => _isLoading = true);
     
     try {
-      print('🔍 Loading all people data...');
+      if (kDebugMode) {
+        print('🔍 Loading all people data...');
+      }
       
       // Load all data in parallel for better performance
       final results = await Future.wait([
@@ -69,15 +72,19 @@ class _PeopleScreenState extends State<PeopleScreen> with SingleTickerProviderSt
         _db.getSettledPeople(),
       ]);
       
-      print('📊 All People count: ${results[0].length}');
-      print('📊 People who owe me count: ${results[1].length}');
-      print('📊 People I owe count: ${results[2].length}');
-      print('📊 Settled people count: ${results[3].length}');
+      if (kDebugMode) {
+        print('📊 All People count: ${results[0].length}');
+        print('📊 People who owe me count: ${results[1].length}');
+        print('📊 People I owe count: ${results[2].length}');
+        print('📊 Settled people count: ${results[3].length}');
+      }
       
       // Print the actual data to see what's coming back
-      print('📋 All people data:');
-      for (var person in results[0]) {
-        print('   - ${person['name']} (ID: ${person['id']})');
+      if (kDebugMode) {
+        print('📋 All people data:');
+        for (var person in results[0]) {
+          print('   - ${person['name']} (ID: ${person['id']})');
+        }
       }
       
       setState(() {
@@ -95,9 +102,13 @@ class _PeopleScreenState extends State<PeopleScreen> with SingleTickerProviderSt
         _isLoading = false;
       });
       
-      print('✅ People loaded successfully');
+      if (kDebugMode) {
+        print('✅ People loaded successfully');
+      }
     } catch (e) {
-      print('❌ Error loading people: $e');
+      if (kDebugMode) {
+        print('❌ Error loading people: $e');
+      }
       setState(() => _isLoading = false);
     }
   }
@@ -228,7 +239,9 @@ class _PeopleScreenState extends State<PeopleScreen> with SingleTickerProviderSt
                 );
 
                 if (result == true) {
-                  print('🔄 Person added, refreshing list...');
+                  if (kDebugMode) {
+                    print('🔄 Person added, refreshing list...');
+                  }
                   _loadPeople(); // Refresh the list
                   // ✅ FAB will automatically reappear because we're still on tab 0
                 }
