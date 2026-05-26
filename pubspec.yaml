@@ -29,13 +29,11 @@ dependencies:
   # local_auth: ^2.1.8
   
   # UI Components
-  flutter_staggered_animations: ^1.1.0
   
   # Charts
   fl_chart: ^0.64.0
   
   # Permissions
-  permission_handler: ^11.0.1
 
   # For device sync
   network_info_plus: ^4.1.0        # Get device IP and network info
@@ -46,6 +44,7 @@ dependencies:
   # for reminder
   flutter_local_notifications: ^18.0.1
   timezone: ^0.10.0
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:
