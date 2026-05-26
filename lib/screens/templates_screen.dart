@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/template_service.dart';
 import '../services/settings_service.dart';
-import '../services/database_service.dart';
 import 'add_transaction_screen.dart';
 
 class TemplatesScreen extends StatefulWidget {
