@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
 import '../widgets/transaction_card.dart';
@@ -61,7 +62,9 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       
     } catch (e) {
-      print('Error loading transactions: $e');
+      if (kDebugMode) {
+        print('Error loading transactions: $e');
+      }
     }
   }
 
@@ -315,21 +318,42 @@ class _HomeScreenState extends State<HomeScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // TODO: Implement actual settlement in database
-              setState(() {
-                // Remove from pending list temporarily for demo
-                _pendingPeople.remove(person);
-                _pendingAmount -= amount;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Payment from ${person['name']} recorded'),
-                  backgroundColor: Colors.green,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
+              try {
+                // Get all pending transaction_people for this person and settle them
+                final personId = person['id'] as String;
+                final transactions = await _db.getPersonTransactions(personId);
+                for (var txn in transactions) {
+                  if (txn['status'] != 'settled') {
+                    final tpRecords = await _db.getPeopleForTransaction(txn['id']);
+                    for (var tp in tpRecords) {
+                      if (tp['personId'] == personId && tp['status'] != 'settled') {
+                        await _db.markTransactionAsSettled(tp['id']);
+                      }
+                    }
+                  }
+                }
+                await _loadTransactions();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Payment from ${person['name']} recorded'),
+                      backgroundColor: Colors.green,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error settling: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
@@ -378,7 +402,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Expenses'),
         leading: IconButton(
