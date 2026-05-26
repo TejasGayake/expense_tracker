@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
@@ -60,30 +61,40 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   // Load categories from database
   Future<void> _loadCategories() async {
-    print('🔍 _loadCategories() called');
+    if (kDebugMode) {
+      print('🔍 _loadCategories() called');
+    }
     setState(() => _isLoadingCategories = true);
 
     try {
       final categoriesData = await _db.getCategories();
-      print('📊 Raw categories data: $categoriesData');
+      if (kDebugMode) {
+        print('📊 Raw categories data: $categoriesData');
+      }
 
       final categories = categoriesData.map((c) => CategoryModel.fromMap(c)).toList();
 
-      print('✅ Converted ${categories.length} categories');
+      if (kDebugMode) {
+        print('✅ Converted ${categories.length} categories');
+      }
 
       setState(() {
         _categories = categories;
         if (_categories.isNotEmpty && _selectedCategoryId == null) {
           _selectedCategoryId = _categories.first.id;
-          print('✅ Set default category ID: $_selectedCategoryId');
+          if (kDebugMode) {
+            print('✅ Set default category ID: $_selectedCategoryId');
+          }
         }
         _isLoadingCategories = false;
       });
     } catch (e) {
-      print('❌ Error loading categories: $e');
+      if (kDebugMode) {
+        print('❌ Error loading categories: $e');
+      }
       setState(() => _isLoadingCategories = false);
     }
-    }
+  }
 
   // Load transaction data for editing
   void _loadTransactionForEdit() {
@@ -94,20 +105,27 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     _selectedDate = DateTime.fromMillisecondsSinceEpoch(txn['date'] as int);
     _selectedPaymentMode = (txn['paymentMode'] as String?) ?? 'Cash';
     
-    // Find and set the category ID based on category name
-    final categoryName = (txn['category'] as String?) ?? 'Other';
-    
     // Set category after categories are loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_categories.isNotEmpty) {
-        final category = _categories.firstWhere(
-          (c) => c.name == categoryName,
-          orElse: () => _categories.first,
-        );
+        // Prefer categoryId, fall back to name match
+        final catId = txn['categoryId'] as String?;
+        final categoryName = (txn['category'] as String?) ?? 'Other';
+        final category = catId != null
+            ? _categories.firstWhere(
+                (c) => c.id == catId,
+                orElse: () => _categories.firstWhere(
+                  (c) => c.name == categoryName,
+                  orElse: () => _categories.first,
+                ),
+              )
+            : _categories.firstWhere(
+                (c) => c.name == categoryName,
+                orElse: () => _categories.first,
+              );
         setState(() {
           _selectedCategoryId = category.id;
         });
-        print('✅ Set category for edit: ${category.name}');
       }
     });
   }
@@ -469,10 +487,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         'amount': amount,
         'date': _selectedDate.millisecondsSinceEpoch,
         'description': _descriptionController.text,
-        'category': selectedCategory.name,  // Save category name
+        'category': selectedCategory.name,
+        'categoryId': selectedCategory.id,
         'paymentMode': _selectedPaymentMode,
-        'notes': _notesController.text.isEmpty 
-            ? null 
+        'notes': _notesController.text.isEmpty
+            ? null
             : _notesController.text,
       };
       
@@ -493,14 +512,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           );
         }
       } else {
-        // Insert new
-        await _db.insertTransaction(transaction);
-        final transactions = await _db.getTransactions();
-        final savedTransaction = transactions.firstWhere(
-          (t) => t['description'] == _descriptionController.text && 
-                 t['amount'] == amount,
-        );
-        savedTransactionId = savedTransaction['id'];
+        // Insert new and get the generated ID directly
+        savedTransactionId = await _db.insertTransaction(transaction);
         
         // Increment category usage count for new transaction
         await _db.incrementCategoryUsage(selectedCategory.id!);

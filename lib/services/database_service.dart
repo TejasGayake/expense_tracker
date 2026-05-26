@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -23,7 +24,7 @@ class DatabaseService {
     
     return await openDatabase(
       path,
-      version: 4, // 🔥 MUST BE 4 for categories
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -38,6 +39,7 @@ class DatabaseService {
         date INTEGER,
         description TEXT,
         category TEXT,
+        categoryId TEXT,
         paymentMode TEXT,
         location TEXT,
         notes TEXT,
@@ -95,7 +97,9 @@ class DatabaseService {
         'createdAt': now,
       });
     }
-    print('✅ Default categories inserted during creation');
+    if (kDebugMode) {
+      print('✅ Default categories inserted during creation');
+    }
 
     // Create transaction_people table
     await db.execute('''
@@ -130,11 +134,15 @@ class DatabaseService {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_transaction_people_person ON transaction_people(personId)');
     
-    print('✅ Database indexes created');
+    if (kDebugMode) {
+      print('✅ Database indexes created');
+    }
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    print('Upgrading database from $oldVersion to $newVersion');
+    if (kDebugMode) {
+      print('Upgrading database from $oldVersion to $newVersion');
+    }
     
     // Upgrade from version 1 to 2
     if (oldVersion < 2) {
@@ -157,7 +165,9 @@ class DatabaseService {
           await db.execute('ALTER TABLE transaction_people ADD COLUMN dueDate INTEGER');
         }
       } catch (e) {
-        print('Migration error (v1->v2): $e');
+        if (kDebugMode) {
+          print('Migration error (v1->v2): $e');
+        }
       }
     }
     
@@ -169,10 +179,14 @@ class DatabaseService {
         
         if (!hasCreatedAt) {
           await db.execute('ALTER TABLE attachments ADD COLUMN createdAt INTEGER');
-          print('✅ Added createdAt column to attachments table');
+          if (kDebugMode) {
+            print('✅ Added createdAt column to attachments table');
+          }
         }
       } catch (e) {
-        print('Migration error (v2->v3): $e');
+        if (kDebugMode) {
+          print('Migration error (v2->v3): $e');
+        }
       }
     }
     
@@ -197,7 +211,9 @@ class DatabaseService {
               createdAt INTEGER
             )
           ''');
-          print('✅ Categories table created during migration');
+          if (kDebugMode) {
+            print('✅ Categories table created during migration');
+          }
           
           // Insert default categories
           final now = DateTime.now().millisecondsSinceEpoch;
@@ -224,10 +240,33 @@ class DatabaseService {
               'createdAt': now,
             });
           }
-          print('✅ Default categories inserted during migration');
+          if (kDebugMode) {
+            print('✅ Default categories inserted during migration');
+          }
         }
       } catch (e) {
-        print('Migration error (v3->v4): $e');
+        if (kDebugMode) {
+          print('Migration error (v3->v4): $e');
+        }
+      }
+    }
+
+    // Upgrade from version 4 to 5 - Add categoryId column
+    if (oldVersion < 5) {
+      try {
+        final tableInfo = await db.rawQuery("PRAGMA table_info(transactions)");
+        final hasCategoryId = tableInfo.any((column) => column['name'] == 'categoryId');
+
+        if (!hasCategoryId) {
+          await db.execute('ALTER TABLE transactions ADD COLUMN categoryId TEXT');
+          if (kDebugMode) {
+            print('✅ Added categoryId column to transactions table');
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Migration error (v4->v5): $e');
+        }
       }
     }
   }
@@ -256,7 +295,9 @@ class DatabaseService {
     try {
       await db.insert('attachments', attachmentData);
     } catch (e) {
-      print('❌ Error inserting attachment: $e');
+      if (kDebugMode) {
+        print('❌ Error inserting attachment: $e');
+      }
       rethrow;
     }
   }
@@ -333,7 +374,9 @@ class DatabaseService {
 
   Future<List<Map<String, dynamic>>> getCategories() async {
     Database db = await database;
-    print('🔍 Fetching categories from database...');
+    if (kDebugMode) {
+      print('🔍 Fetching categories from database...');
+    }
     
     try {
       final results = await db.query(
@@ -341,10 +384,14 @@ class DatabaseService {
         orderBy: 'usageCount DESC, name ASC',
       );
       
-      print('📊 Found ${results.length} categories');
+      if (kDebugMode) {
+        print('📊 Found ${results.length} categories');
+      }
       return results;
     } catch (e) {
-      print('❌ Error fetching categories: $e');
+      if (kDebugMode) {
+        print('❌ Error fetching categories: $e');
+      }
       return [];
     }
   }
@@ -371,7 +418,7 @@ class DatabaseService {
 
     final transactions = await db.query(
       'transactions',
-      where: 'category = ?',
+      where: 'categoryId = ?',
       whereArgs: [id],
     );
 
@@ -400,11 +447,15 @@ class DatabaseService {
     try {
       final existing = await getCategories();
       if (existing.isNotEmpty) {
-        print('✅ Categories already exist, skipping initialization');
+        if (kDebugMode) {
+          print('✅ Categories already exist, skipping initialization');
+        }
         return;
       }
 
-      print('📦 Initializing default categories...');
+      if (kDebugMode) {
+        print('📦 Initializing default categories...');
+      }
       
       final defaultCategories = [
         {'name': 'Food', 'icon': '🍕', 'color': 0xFFFF6B6B, 'isDefault': 1},
@@ -419,12 +470,18 @@ class DatabaseService {
 
       for (var cat in defaultCategories) {
         await insertCategory(cat);
-        print('✅ Added category: ${cat['name']}');
+        if (kDebugMode) {
+          print('✅ Added category: ${cat['name']}');
+        }
       }
 
-      print('🎉 Default categories initialized successfully!');
+      if (kDebugMode) {
+        print('🎉 Default categories initialized successfully!');
+      }
     } catch (e) {
-      print('❌ Error in initializeDefaultCategories: $e');
+      if (kDebugMode) {
+        print('❌ Error in initializeDefaultCategories: $e');
+      }
     }
   }
 
@@ -458,12 +515,18 @@ class DatabaseService {
           whereArgs: [transactionPersonId],
         );
         
-        print('✅ Transaction marked as settled');
+        if (kDebugMode) {
+          print('✅ Transaction marked as settled');
+        }
       } else {
-        print('❌ Transaction not found');
+        if (kDebugMode) {
+          print('❌ Transaction not found');
+        }
       }
     } catch (e) {
-      print('❌ Error in markTransactionAsSettled: $e');
+      if (kDebugMode) {
+        print('❌ Error in markTransactionAsSettled: $e');
+      }
       rethrow;
     }
   }  
@@ -495,23 +558,29 @@ class DatabaseService {
           whereArgs: [transactionPersonId],
         );
 
-        print('✅ Partial settlement recorded: $amount');
+        if (kDebugMode) {
+          print('✅ Partial settlement recorded: $amount');
+        }
       }
     } catch (e) {
-      print('❌ Error in markTransactionAsPartiallySettled: $e');
+      if (kDebugMode) {
+        print('❌ Error in markTransactionAsPartiallySettled: $e');
+      }
       rethrow;
     }
   }
 
   // ===== TRANSACTION METHODS =====
   
-  Future<void> insertTransaction(Map<String, dynamic> transaction) async {
+  Future<String> insertTransaction(Map<String, dynamic> transaction) async {
     Database db = await database;
-    transaction['id'] = generateId();
+    final id = generateId();
+    transaction['id'] = id;
     transaction['createdAt'] = DateTime.now().millisecondsSinceEpoch;
     transaction['updatedAt'] = DateTime.now().millisecondsSinceEpoch;
-    
+
     await db.insert('transactions', transaction);
+    return id;
   }
 
   Future<List<Map<String, dynamic>>> getTransactions() async {
@@ -614,7 +683,9 @@ class DatabaseService {
       
       return results;
     } catch (e) {
-      print('Error in getAllPeopleWithSummary: $e');
+      if (kDebugMode) {
+        print('Error in getAllPeopleWithSummary: $e');
+      }
       return [];
     }
   }
@@ -661,7 +732,9 @@ class DatabaseService {
       
       return results;
     } catch (e) {
-      print('Error in getPersonTransactions: $e');
+      if (kDebugMode) {
+        print('Error in getPersonTransactions: $e');
+      }
       return [];
     }
   }
@@ -695,7 +768,9 @@ class DatabaseService {
       }
       return {'owedToMe': 0, 'iOwe': 0};
     } catch (e) {
-      print('Error in getPersonPendingAmount: $e');
+      if (kDebugMode) {
+        print('Error in getPersonPendingAmount: $e');
+      }
       return {'owedToMe': 0, 'iOwe': 0};
     }
   }
@@ -804,7 +879,9 @@ class DatabaseService {
     try {
       await db.insert('transaction_people', tpData);
     } catch (e) {
-      print('Error inserting transaction person: $e');
+      if (kDebugMode) {
+        print('Error inserting transaction person: $e');
+      }
       rethrow;
     }
   }
@@ -884,7 +961,9 @@ class DatabaseService {
         };
       }).toList();
     } catch (e) {
-      print('Error in getPendingAmounts: $e');
+      if (kDebugMode) {
+        print('Error in getPendingAmounts: $e');
+      }
       return [];
     }
   }
@@ -906,7 +985,9 @@ class DatabaseService {
       
       return results;
     } catch (e) {
-      print('Error in getTransactionsWithPeople: $e');
+      if (kDebugMode) {
+        print('Error in getTransactionsWithPeople: $e');
+      }
       return [];
     }
   }
@@ -927,6 +1008,7 @@ class DatabaseService {
         'date': transaction['date'] as int,
         'description': transaction['description'] as String,
         'category': transaction['category'] as String,
+        'categoryId': transaction['categoryId'] as String?,
         'paymentMode': transaction['paymentMode'] as String,
         'location': transaction['location'] as String?,
         'notes': transaction['notes'] as String?,
