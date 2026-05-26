@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../services/database_service.dart';
 import '../widgets/transaction_card.dart';
 import '../widgets/app_drawer.dart';
+import '../utils/page_transitions.dart';
 import 'add_transaction_screen.dart';
 import 'transaction_detail_screen.dart';
 import 'search_screen.dart';
@@ -424,9 +425,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const SearchScreen(),
-                ),
+                SlideFadePageRoute(page: const SearchScreen()),
               );
             },
           ),
@@ -477,57 +476,75 @@ class _HomeScreenState extends State<HomeScreen> {
         onRefresh: _loadTransactions,
         child: ListView(
           children: [
-            // Summary Cards
+            // Summary Cards with staggered entrance
             Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
                   Expanded(
-                    child: _buildSummaryCard(
-                      title: 'Total Spent',
-                      amount: _totalSpent,
-                      icon: Icons.trending_down,
-                      color: Colors.red,
+                    child: StaggeredSlideIn(
+                      index: 0,
+                      child: _buildSummaryCard(
+                        title: 'Total Spent',
+                        amount: _totalSpent,
+                        icon: Icons.trending_down,
+                        color: Colors.red,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildSummaryCard(
-                      title: 'Pending',
-                      amount: _pendingAmount,
-                      icon: Icons.access_time,
-                      color: Colors.orange,
+                    child: StaggeredSlideIn(
+                      index: 1,
+                      child: _buildSummaryCard(
+                        title: 'Pending',
+                        amount: _pendingAmount,
+                        icon: Icons.access_time,
+                        color: Colors.orange,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
             
-            // Quick Actions
+            // Quick Actions with staggered entrance
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildActionButton(
-                    icon: Icons.add,
-                    label: 'Add',
-                    onTap: () => _navigateToAddTransaction(),
+                  StaggeredSlideIn(
+                    index: 2,
+                    child: _buildActionButton(
+                      icon: Icons.add,
+                      label: 'Add',
+                      onTap: () => _navigateToAddTransaction(),
+                    ),
                   ),
-                  _buildActionButton(
-                    icon: Icons.camera_alt,
-                    label: 'Scan',
-                    onTap: _scanReceipt,
+                  StaggeredSlideIn(
+                    index: 3,
+                    child: _buildActionButton(
+                      icon: Icons.camera_alt,
+                      label: 'Scan',
+                      onTap: _scanReceipt,
+                    ),
                   ),
-                  _buildActionButton(
-                    icon: Icons.people,
-                    label: 'Split',
-                    onTap: _manageSplit,
+                  StaggeredSlideIn(
+                    index: 4,
+                    child: _buildActionButton(
+                      icon: Icons.people,
+                      label: 'Split',
+                      onTap: _manageSplit,
+                    ),
                   ),
-                  _buildActionButton(
-                    icon: Icons.notifications,
-                    label: 'Remind',
-                    onTap: _showReminders,
+                  StaggeredSlideIn(
+                    index: 5,
+                    child: _buildActionButton(
+                      icon: Icons.notifications,
+                      label: 'Remind',
+                      onTap: _showReminders,
+                    ),
                   ),
                 ],
               ),
@@ -629,9 +646,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => const SearchScreen(),
-                        ),
+                        SlideFadePageRoute(page: const SearchScreen()),
                       );
                     },
                     child: const Text('See All'),
@@ -640,7 +655,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             
-            // Transactions List
+            // Transactions List with staggered entrance
             _transactions.isEmpty
                 ? _buildEmptyState()
                 : ListView.builder(
@@ -650,22 +665,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemCount: _transactions.length > 5 ? 5 : _transactions.length,
                     itemBuilder: (context, index) {
                       final txn = _transactions[index];
-                      return TransactionCard(
-                        transaction: txn,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => TransactionDetailScreen(
-                                transaction: txn,
+                      return StaggeredSlideIn(
+                        index: index,
+                        delay: const Duration(milliseconds: 60),
+                        child: TransactionCard(
+                          transaction: txn,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TransactionDetailScreen(
+                                  transaction: txn,
+                                ),
                               ),
-                            ),
-                          ).then((shouldRefresh) {
-                            if (shouldRefresh == true) {
-                              _loadTransactions();
-                            }
-                          });
-                        },
+                            ).then((shouldRefresh) {
+                              if (shouldRefresh == true) {
+                                _loadTransactions();
+                              }
+                            });
+                          },
+                        ),
                       );
                     },
                   ),
@@ -718,8 +737,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            _formatAmount(amount),
+          CountingText(
+            endValue: amount,
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -735,34 +754,41 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardTheme.color,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        splashColor: Theme.of(context).primaryColor.withOpacity(0.15),
+        highlightColor: Theme.of(context).primaryColor.withOpacity(0.08),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardTheme.color,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(icon, color: Theme.of(context).colorScheme.primary),
             ),
-            child: Icon(icon, color: Theme.of(context).colorScheme.primary),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

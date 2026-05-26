@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
+import '../utils/page_transitions.dart';
 import 'add_person_screen.dart';
 import 'package:intl/intl.dart';
 import 'person_details_screen.dart';
@@ -37,10 +38,10 @@ class _PeopleScreenState extends State<PeopleScreen> with SingleTickerProviderSt
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
 
-    // ✅ ADD THIS LISTENER - Updates FAB when tab changes
+    // Only rebuild when tab index actually changes (not during swipe gestures)
     _tabController.addListener(() {
-      if (mounted) {
-        setState(() {}); // Rebuild to show/hide FAB based on tab index
+      if (_tabController.indexIsChanging && mounted) {
+        setState(() {});
       }
     });
 
@@ -228,28 +229,33 @@ class _PeopleScreenState extends State<PeopleScreen> with SingleTickerProviderSt
                 _buildPeopleList(_filteredSettled, 'settled'),
               ],
             ),
-      floatingActionButton: _tabController.index == 0 
-          ? FloatingActionButton(
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddPersonScreen(),
-                  ),
-                );
+      floatingActionButton: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeOutCubic,
+        transitionBuilder: (child, animation) {
+          return ScaleTransition(scale: animation, child: child);
+        },
+        child: _tabController.index == 0
+            ? FloatingActionButton(
+                key: const ValueKey('fab_people'),
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AddPersonScreen(),
+                    ),
+                  );
 
-                if (result == true) {
-                  if (kDebugMode) {
-                    print('🔄 Person added, refreshing list...');
+                  if (result == true) {
+                    _loadPeople();
                   }
-                  _loadPeople(); // Refresh the list
-                  // ✅ FAB will automatically reappear because we're still on tab 0
-                }
-              },
-              backgroundColor: Theme.of(context).primaryColor,
-              child: const Icon(Icons.person_add, color: Colors.white),
-            )
-          : null,
+                },
+                backgroundColor: Theme.of(context).primaryColor,
+                child: const Icon(Icons.person_add, color: Colors.white),
+              )
+            : const SizedBox.shrink(key: ValueKey('fab_empty')),
+      ),
     );
   }
 
@@ -291,7 +297,11 @@ class _PeopleScreenState extends State<PeopleScreen> with SingleTickerProviderSt
       itemCount: people.length,
       itemBuilder: (context, index) {
         final person = people[index];
-        return _buildAllPersonCard(person);
+        return StaggeredSlideIn(
+          index: index,
+          delay: const Duration(milliseconds: 60),
+          child: _buildAllPersonCard(person),
+        );
       },
     );
   }
@@ -605,7 +615,11 @@ class _PeopleScreenState extends State<PeopleScreen> with SingleTickerProviderSt
       itemCount: people.length,
       itemBuilder: (context, index) {
         final person = people[index];
-        return _buildPersonCard(person, type);
+        return StaggeredSlideIn(
+          index: index,
+          delay: const Duration(milliseconds: 60),
+          child: _buildPersonCard(person, type),
+        );
       },
     );
   }
