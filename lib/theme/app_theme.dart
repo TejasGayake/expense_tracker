@@ -13,8 +13,7 @@ class AppTheme {
     colorScheme: const ColorScheme.light(
       primary: primaryBlue,
       secondary: primaryBlue,
-      surface: Colors.white,
-      background: Color(0xFFF2F2F7),
+      surface: Color(0xFFF2F2F7),
     ),
     fontFamily: '.SF Pro Display',
     appBarTheme: const AppBarTheme(
@@ -65,7 +64,6 @@ class AppTheme {
       primary: primaryBlue,
       secondary: primaryBlue,
       surface: Color(0xFF1C1C1E),
-      background: Color(0xFF000000),
     ),
     fontFamily: '.SF Pro Display',
     appBarTheme: const AppBarTheme(

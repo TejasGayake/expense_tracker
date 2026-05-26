@@ -76,23 +76,42 @@ class _PinScreenState extends State<PinScreen> {
 
   Future<void> _handleLoginPin(String pin) async {
     if (_successCalled) return;
-    
+
+    // Check lockout before verifying
+    if (await _security.isLockedOut()) {
+      final remaining = await _security.getRemainingLockoutSeconds();
+      setState(() {
+        _message = 'Too many attempts. Try again in ${remaining}s';
+        _isLoading = false;
+        _pinController.clear();
+      });
+      return;
+    }
+
     setState(() => _isLoading = true);
-    
+
     final isValid = await _security.verifyPin(pin);
-    
+
     if (isValid && mounted && !_successCalled) {
       _successCalled = true;
       await _security.updateLastActive();
       widget.onSuccess();
     } else {
+      final attempts = await _security.getFailedAttempts();
+      final remaining = _maxFailedAttempts - attempts;
       setState(() {
-        _message = 'Incorrect PIN';
+        if (remaining <= 0) {
+          _message = 'Too many attempts. Locked for 30 seconds';
+        } else {
+          _message = 'Incorrect PIN. $remaining attempts remaining';
+        }
         _isLoading = false;
         _pinController.clear();
       });
     }
   }
+
+  static const int _maxFailedAttempts = 5;
 
   void _handleKeyPress(String key) {
     if (_isLoading || _successCalled) return;
@@ -117,7 +136,7 @@ class _PinScreenState extends State<PinScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
