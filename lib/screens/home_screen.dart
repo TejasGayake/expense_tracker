@@ -33,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _pendingPeople = [];
   double _totalSpent = 0;
   double _totalIncome = 0;
+  // ignore: unused_field
   double _pendingAmount = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String _selectedFilter = 'This Month';
@@ -267,6 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ===== SHOW REMINDERS =====
+  // ignore: unused_element
   Future<void> _showReminders() async {
     if (_pendingPeople.isEmpty) {
       _showComingSoon('No pending reminders');

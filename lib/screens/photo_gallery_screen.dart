@@ -162,7 +162,6 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                               ? DateTime.fromMillisecondsSinceEpoch(txn['date'] as int)
                               : null;
                           final txnAmount = txn?['amount'] as num?;
-                          final txnDesc = txn?['description'] as String?;
 
                           return GestureDetector(
                             onTap: () => _viewFullScreen(att),
