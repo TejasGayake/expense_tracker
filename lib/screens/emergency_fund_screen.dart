@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../services/emergency_fund_service.dart';
 import '../services/settings_service.dart';
 

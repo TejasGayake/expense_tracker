@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/template_service.dart';
 import '../services/settings_service.dart';
+import '../services/database_service.dart';
 import 'add_transaction_screen.dart';
 
 class TemplatesScreen extends StatefulWidget {
@@ -39,7 +40,6 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
   void _showAddTemplateDialog() {
     final nameController = TextEditingController();
     final amountController = TextEditingController();
-    final descriptionController = TextEditingController();
     String selectedCategory = 'Other';
     String selectedPaymentMode = 'Cash';
 

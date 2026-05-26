@@ -347,8 +347,6 @@ class _TaxReportScreenState extends State<TaxReportScreen> {
     final amount = (txn['amount'] as num).toDouble();
     final category = txn['category'] as String? ?? 'Other';
     final description = txn['description'] as String? ?? '';
-    final categoryName = txn['categoryName'] as String? ?? category;
-    final categoryIcon = txn['categoryIcon'] as String? ?? _getCategoryIcon(category);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
