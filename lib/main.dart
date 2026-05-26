@@ -7,6 +7,7 @@ import 'screens/home_screen.dart';
 import 'screens/pin_screen.dart';
 import 'services/security_service.dart';
 import 'services/database_service.dart';
+import 'services/settings_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -114,6 +115,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       if (kDebugMode) {
         print('🚀 Initializing app data...');
       }
+      await SettingsService().loadSettings();
       await _db.initializeDefaultCategories();
       final categories = await _db.getCategories();
       if (kDebugMode) {

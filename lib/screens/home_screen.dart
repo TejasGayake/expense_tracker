@@ -9,6 +9,7 @@ import 'add_transaction_screen.dart';
 import 'transaction_detail_screen.dart';
 import 'search_screen.dart';
 import 'package:intl/intl.dart';
+import '../services/settings_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onThemeToggle;
@@ -72,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _formatAmount(double amount) {
     final formatter = NumberFormat.currency(
       locale: 'en_IN',
-      symbol: '₹',
+      symbol: SettingsService().currencySymbol,
       decimalDigits: 2,
     );
     return formatter.format(amount);
