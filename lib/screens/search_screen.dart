@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/database_service.dart';
 import '../widgets/transaction_card.dart';
+import '../models/category_model.dart';
 import 'transaction_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -44,7 +46,9 @@ class _SearchScreenState extends State<SearchScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading transactions: $e');
+      if (kDebugMode) {
+        print('Error loading transactions: $e');
+      }
       setState(() => _isLoading = false);
     }
   }
@@ -192,19 +196,18 @@ class _SearchScreenState extends State<SearchScreen> {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: _getCategoryColor(category).withOpacity(0.1),
+                  color: getCategoryColor(category).withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
-                  child: Icon(
-                    _getCategoryIcon(category),
-                    color: _getCategoryColor(category),
-                    size: 24,
+                  child: Text(
+                    getCategoryIcon(category),
+                    style: const TextStyle(fontSize: 24),
                   ),
                 ),
               ),
               const SizedBox(width: 16),
-              
+
               // Transaction Details
               Expanded(
                 child: Column(
@@ -238,14 +241,14 @@ class _SearchScreenState extends State<SearchScreen> {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: _getCategoryColor(category).withOpacity(0.1),
+                            color: getCategoryColor(category).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             category,
                             style: TextStyle(
                               fontSize: 11,
-                              color: _getCategoryColor(category),
+                              color: getCategoryColor(category),
                             ),
                           ),
                         ),
@@ -339,47 +342,5 @@ class _SearchScreenState extends State<SearchScreen> {
         ],
       ),
     );
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'Food':
-        return Icons.restaurant;
-      case 'Transport':
-        return Icons.directions_car;
-      case 'Shopping':
-        return Icons.shopping_bag;
-      case 'Entertainment':
-        return Icons.movie;
-      case 'Bills':
-        return Icons.receipt;
-      case 'Healthcare':
-        return Icons.medical_services;
-      case 'Education':
-        return Icons.school;
-      default:
-        return Icons.attach_money;
-    }
-  }
-
-  Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'Food':
-        return Colors.orange;
-      case 'Transport':
-        return Colors.blue;
-      case 'Shopping':
-        return Colors.purple;
-      case 'Entertainment':
-        return Colors.pink;
-      case 'Bills':
-        return Colors.red;
-      case 'Healthcare':
-        return Colors.teal;
-      case 'Education':
-        return Colors.indigo;
-      default:
-        return Colors.grey;
-    }
   }
 }

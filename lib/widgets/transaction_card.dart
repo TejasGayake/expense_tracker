@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../models/category_model.dart';
 
 class TransactionCard extends StatelessWidget {
   final Map<String, dynamic> transaction;
@@ -42,13 +43,12 @@ class TransactionCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                color: getCategoryColor(transaction['category'] as String?).withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                _getCategoryIcon(transaction['category']),
-                color: Theme.of(context).colorScheme.primary,
-                size: 24,
+              child: Text(
+                getCategoryIcon(transaction['category'] as String?),
+                style: const TextStyle(fontSize: 24),
               ),
             ),
             const SizedBox(width: 16),
@@ -135,26 +135,5 @@ class TransactionCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  IconData _getCategoryIcon(String? category) {
-    switch (category) {
-      case 'Food':
-        return Icons.restaurant;
-      case 'Transport':
-        return Icons.directions_car;
-      case 'Shopping':
-        return Icons.shopping_bag;
-      case 'Entertainment':
-        return Icons.movie;
-      case 'Bills':
-        return Icons.receipt;
-      case 'Healthcare':
-        return Icons.medical_services;
-      case 'Education':
-        return Icons.school;
-      default:
-        return Icons.attach_money;
-    }
   }
 }
