@@ -360,7 +360,7 @@ class _TaxReportScreenState extends State<TaxReportScreen> {
             color: _getCategoryColor(category).withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Center(child: Text(categoryIcon, style: const TextStyle(fontSize: 18))),
+          child: Center(child: Text(_getCategoryIcon(category), style: const TextStyle(fontSize: 18))),
         ),
         title: Text(
           description.isNotEmpty ? description : category,
@@ -369,7 +369,7 @@ class _TaxReportScreenState extends State<TaxReportScreen> {
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(
-          '${DateFormat('MMM dd, yyyy').format(date)} \u2022 $categoryName',
+          '${DateFormat('MMM dd, yyyy').format(date)} \u2022 $category',
           style: TextStyle(fontSize: 12, color: Colors.grey[500]),
         ),
         trailing: Text(
