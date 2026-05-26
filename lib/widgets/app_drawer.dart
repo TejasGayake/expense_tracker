@@ -401,6 +401,7 @@ class AppDrawer extends StatelessWidget {
             onPressed: () async {
               final security = SecurityService();
               await security.resetSecurity();
+              if (!context.mounted) return;
               Navigator.pop(context);
               Navigator.pop(context); // Close drawer
               // Navigate to PIN setup screen
@@ -408,12 +409,15 @@ class AppDrawer extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => PinScreen(
-                    mode: 'setup',
+                    isSetup: true,
                     onSuccess: () {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const HomeScreen(),
+                          builder: (context) => HomeScreen(
+                            onThemeToggle: onThemeToggle,
+                            isDarkMode: isDarkMode,
+                          ),
                         ),
                       );
                     },

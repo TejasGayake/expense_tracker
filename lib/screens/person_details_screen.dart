@@ -524,7 +524,6 @@ class _PersonDetailsScreenState extends State<PersonDetailsScreen> with SingleTi
                   TextButton.icon(
                     onPressed: () async {
                       try {
-                        final phone = widget.person['phone'] as String?;
                         final personName = widget.person['name'] as String? ?? 'Unknown';
                         final pending = (transaction['shareAmount'] as num?)?.toDouble() ?? (transaction['amount'] as num?)?.toDouble() ?? 0;
 
@@ -533,7 +532,6 @@ class _PersonDetailsScreenState extends State<PersonDetailsScreen> with SingleTi
                         await reminderService.sendReminder(
                           personName: personName,
                           amount: pending,
-                          phoneNumber: phone,
                         );
 
                         if (mounted) {
