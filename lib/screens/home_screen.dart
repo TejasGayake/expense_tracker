@@ -771,7 +771,17 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 8),
 
             // Transactions List with staggered entrance
-            _transactions.isEmpty
+            _isLoading
+                ? Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: List.generate(
+                        5,
+                        (index) => const TransactionSkeleton(),
+                      ),
+                    ),
+                  )
+                : _transactions.isEmpty
                 ? _buildEmptyState()
                 : ListView.builder(
                     shrinkWrap: true,
