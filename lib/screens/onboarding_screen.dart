@@ -23,25 +23,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   String _selectedCurrency = '₹';
 
   final List<_OnboardingPage> _pages = [
-    _OnboardingPage(
+    const _OnboardingPage(
       icon: Icons.account_balance_wallet,
       title: 'Welcome to GT Expenser',
       description: 'Track expenses, split bills, and manage your money — all offline, all private.',
       color: Color(0xFF007AFF),
     ),
-    _OnboardingPage(
+    const _OnboardingPage(
       icon: Icons.security,
       title: 'Your Data Stays Private',
       description: 'Everything is stored locally on your device. No cloud, no accounts, no tracking.',
       color: Color(0xFF34C759),
     ),
-    _OnboardingPage(
+    const _OnboardingPage(
       icon: Icons.people,
       title: 'Split Bills Easily',
       description: 'Add people, split expenses, track who owes what, and send reminders.',
       color: Color(0xFFFF9500),
     ),
-    _OnboardingPage(
+    const _OnboardingPage(
+      icon: Icons.currency_exchange,
+      title: 'Choose Your Currency',
+      description: 'Select your preferred currency for displaying amounts.',
+      color: Color(0xFF5AC8FA),
+      showCurrencyPicker: true,
+    ),
+    const _OnboardingPage(
       icon: Icons.sync,
       title: 'Sync Between Devices',
       description: 'Connect your Android and Windows devices directly over WiFi — no internet needed.',
@@ -147,17 +154,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           textAlign: TextAlign.center,
                         ),
 
-                        // Currency picker on last page
-                        if (index == _pages.length - 1) ...[
+                        // Currency picker on currency page
+                        if (page.showCurrencyPicker) ...[
                           const SizedBox(height: 32),
-                          const Text(
-                            'Choose your currency',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
@@ -167,6 +166,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               return ChoiceChip(
                                 label: Text('${c['symbol']} ${c['name']}'),
                                 selected: isSelected,
+                                selectedColor: page.color.withOpacity(0.2),
                                 onSelected: (_) {
                                   setState(() => _selectedCurrency = c['symbol']!);
                                 },
@@ -207,7 +207,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                   // Next / Get Started button
                   SizedBox(
-                    width: 120,
+                    width: 140,
                     child: ElevatedButton(
                       onPressed: _nextPage,
                       style: ElevatedButton.styleFrom(
@@ -223,6 +223,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         _currentPage == _pages.length - 1
                             ? 'Get Started'
                             : 'Next',
+                        style: const TextStyle(fontSize: 16),
                       ),
                     ),
                   ),
@@ -241,11 +242,13 @@ class _OnboardingPage {
   final String title;
   final String description;
   final Color color;
+  final bool showCurrencyPicker;
 
   const _OnboardingPage({
     required this.icon,
     required this.title,
     required this.description,
     required this.color,
+    this.showCurrencyPicker = false,
   });
 }
